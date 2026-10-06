@@ -7,7 +7,7 @@
     "pg": "^8.12.0",
     "qrcode-terminal": "^0.12.0"
   },
-  "description": "MUAVIA MINI BOT - Personal WhatsApp bot: message scheduler, channel auto-posting with Gemini AI images, AI chatbot",
+  "description": "BABA SAB JANTA HAI - Personal WhatsApp bot: message scheduler, channel auto-posting with Gemini AI images, AI chatbot",
   "engines": {
     "node": ">=20"
   },

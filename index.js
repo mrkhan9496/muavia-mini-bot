@@ -25,6 +25,13 @@ const channelCmds = require('./commands/channel');
 const chatbotCmds = require('./commands/chatbot');
 const geminiCmds = require('./commands/gemini');
 const menuCmds = require('./commands/menu');
+const movieCmds = require('./commands/movie');
+const vvCmds = require('./commands/vv');
+const antideleteCmds = require('./commands/antidelete');
+const autostatusCmds = require('./commands/autostatus');
+const statusreactCmds = require('./commands/statusreact');
+const onetickCmds = require('./commands/onetick');
+const downloadersCmds = require('./commands/downloaders');
 
 const OWNER = (process.env.OWNER_NUMBER || '').replace(/[^0-9]/g, '');
 const AUTH_DIR = path.join(process.cwd(), 'auth_info');
@@ -52,6 +59,17 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'findchannel': return channelCmds.findchannelCmd(sock, from, msg, args);
         case 'chatbot': return chatbotCmds.chatbotCmd(sock, from, msg, args);
         case 'gemini': return geminiCmds.geminiCmd(sock, from, msg, args);
+        case 'movie': case 'movies': return movieCmds.movieCmd(sock, from, msg, args);
+        case 'vv': return vvCmds.vvCmd(sock, from, msg, args);
+        case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
+        case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
+        case 'statusreact': return statusreactCmds.statusreactCmd(sock, from, msg, args);
+        case 'onetick': case 'ghost': case 'singletick':
+            return onetickCmds.onetickCmd(sock, from, msg, args, isAdmin);
+        case 'tiktok': case 'tt': return downloadersCmds.tiktokCmd(sock, from, msg, args);
+        case 'insta': case 'ig': return downloadersCmds.instaCmd(sock, from, msg, args);
+        case 'fb': case 'facebook': return downloadersCmds.fbCmd(sock, from, msg, args);
+        case 'pinterest': case 'pin': return downloadersCmds.pinterestCmd(sock, from, msg, args);
         default: return null; // unknown
     }
 }
@@ -63,8 +81,19 @@ async function onMessage(m) {
         const from = msg.key.remoteJid;
         const isMe = msg.key.fromMe;
         if (isMe) return; // never reply to own messages (no loops)
-        if (from === 'status@broadcast') return;
-
+        // Status updates: handle auto-status (view + react) before returning
+        if (from === 'status@broadcast') {
+            await autostatusCmds.handleStatusUpdate(sock, m).catch(() => {});
+            return;
+        }
+        // Antidelete: store every incoming message; handle revocations
+        try {
+            if (msg.message?.protocolMessage?.type === 0) {
+                await antideleteCmds.handleMessageRevocation(sock, msg).catch(() => {});
+                return;
+            }
+            antideleteCmds.storeMessage(sock, msg).catch(() => {});
+        } catch {} 
         const text = msg.message.conversation
             || msg.message.extendedTextMessage?.text
             || msg.message.imageMessage?.caption
@@ -124,6 +153,8 @@ async function start() {
         if (qr) { console.log('Scan QR to pair:'); qrcode.generate(qr, { small: true }); }
         if (connection === 'open') {
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
+            // Re-apply ghost mode if it was enabled (persists across restarts)
+            onetickCmds.isGhostEnabled().then(en => { if (en) onetickCmds.applyGhostMode(sock, true); }).catch(() => {});
             scheduler.start(sock);
             channelPost.start(sock);
         }
