@@ -29,6 +29,8 @@ const movieCmds = require('./commands/movie');
 const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
 const autostatusCmds = require('./commands/autostatus');
+const autoreactCmds = require('./commands/autoreact');
+const mirrorCmds = require('./commands/mirror');
 const statusreactCmds = require('./commands/statusreact');
 const onetickCmds = require('./commands/onetick');
 const downloadersCmds = require('./commands/downloaders');
@@ -63,6 +65,9 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'vv': return vvCmds.vvCmd(sock, from, msg, args);
         case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
         case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
+        case 'autoreact': return autoreactCmds.autoreactCmd(sock, from, msg, args, isAdmin);
+        case 'setsource': return mirrorCmds.setsourceCmd(sock, from, msg, args);
+        case 'mirror': return mirrorCmds.mirrorCmd(sock, from, msg, args);
         case 'statusreact': return statusreactCmds.statusreactCmd(sock, from, msg, args);
         case 'onetick': case 'ghost': case 'singletick':
             return onetickCmds.onetickCmd(sock, from, msg, args, isAdmin);
@@ -81,11 +86,15 @@ async function onMessage(m) {
         const from = msg.key.remoteJid;
         const isMe = msg.key.fromMe;
         if (isMe) return; // never reply to own messages (no loops)
+        // Channel mirror: source channel ki nayi post → apne channel par repost
+        await mirrorCmds.handleMirrorMessage(sock, msg).catch(() => {});
         // Status updates: handle auto-status (view + react) before returning
         if (from === 'status@broadcast') {
             await autostatusCmds.handleStatusUpdate(sock, m).catch(() => {});
             return;
         }
+        // Auto-react: har incoming message par emoji react (jab ON ho)
+        autoreactCmds.handleAutoReact(sock, msg).catch(() => {});
         // Antidelete: store every incoming message; handle revocations
         try {
             if (msg.message?.protocolMessage?.type === 0) {
@@ -155,6 +164,10 @@ async function start() {
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
             // Re-apply ghost mode if it was enabled (persists across restarts)
             onetickCmds.isGhostEnabled().then(en => { if (en) onetickCmds.applyGhostMode(sock, true); }).catch(() => {});
+            // Re-follow mirror source channel (taake uski posts milti rahein)
+            mirrorCmds.getSourceJid().then(jid => {
+                if (jid) sock.newsletterFollow(jid).catch(() => {});
+            }).catch(() => {});
             scheduler.start(sock);
             channelPost.start(sock);
         }

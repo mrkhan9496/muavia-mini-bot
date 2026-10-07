@@ -43,6 +43,11 @@ async function menuCmd(sock, from, msg) {
         jSec('STATUS', [
             'autostatus on/off',
             'statusreact <emoji>',
+            'autoreact on/off',
+        ]),
+        jSec('MIRROR', [
+            'setsource <link>',
+            'mirror on/off',
         ]),
         jSec('PRIVACY', [
             'antidelete on/off',
@@ -53,7 +58,7 @@ async function menuCmd(sock, from, msg) {
     const header =
 `╭━━━〔 🤖 *BABA SAB JANTA HAI* 〕━━━┈⊷
 ┃ 👑 Owner: Muavia
-┃ ⚡ Total Commands: 25
+┃ ⚡ Total Commands: 27
 ╰━━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
 
     await sock.sendMessage(from, {
