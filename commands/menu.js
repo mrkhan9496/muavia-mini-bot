@@ -1,6 +1,9 @@
-/** .menu — command list (JAWAD-style boxes, MR MUAVIA branding) */
+/** .menu — command list (JAWAD-style boxes, BABA SAB JANTA HAI branding) */
+const fs = require('fs');
+const path = require('path');
 const _scMap = {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ғ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'ǫ',r:'ʀ',s:'s',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ'};
 const toSmallCaps = (s) => String(s || '').toLowerCase().split('').map(ch => _scMap[ch] || ch).join('');
+const MENU_VIDEO = path.join(__dirname, '..', 'assets', 'menu-logo.mp4');
 
 function jSec(title, cmds) {
     const lines = (cmds || []).filter(Boolean).map(c => `*┋ ⬡ ${toSmallCaps(c)}*`);
@@ -61,9 +64,18 @@ async function menuCmd(sock, from, msg) {
 ┃ ⚡ Total Commands: 27
 ╰━━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
 
-    await sock.sendMessage(from, {
-        text: header + sections.join('\n\n') + '\n\n> *© PERSONAL BOT — MUAVIA*'
-    }, { quoted: msg });
+    const caption = header + sections.join('\n\n') + '\n\n> *© PERSONAL BOT — MUAVIA*';
+
+    // Menu ke saath logo video bhejo (agar video file maujood hai)
+    if (fs.existsSync(MENU_VIDEO)) {
+        await sock.sendMessage(from, {
+            video: fs.readFileSync(MENU_VIDEO),
+            caption: caption,
+            gifPlayback: false
+        }, { quoted: msg });
+    } else {
+        await sock.sendMessage(from, { text: caption }, { quoted: msg });
+    }
 }
 
 async function pingCmd(sock, from, msg) {
