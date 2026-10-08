@@ -46,6 +46,7 @@ async function menuCmd(sock, from, msg) {
         jSec('REALITY', [
             'mard (random video)',
             'sad (random sad video)',
+            'baap (random baap video)',
         ]),
         jSec('STATUS', [
             'autostatus on/off',
