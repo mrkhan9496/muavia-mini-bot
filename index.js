@@ -25,6 +25,7 @@ const channelCmds = require('./commands/channel');
 const chatbotCmds = require('./commands/chatbot');
 const geminiCmds = require('./commands/gemini');
 const menuCmds = require('./commands/menu');
+const mardCmds = require('./commands/mard');
 const movieCmds = require('./commands/movie');
 const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
@@ -49,6 +50,7 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
     switch (cmd) {
         case 'menu': case 'help': return menuCmds.menuCmd(sock, from, msg);
         case 'ping': return menuCmds.pingCmd(sock, from, msg);
+        case 'mard': return mardCmds.mardCmd(sock, from, msg);
         case 'schedule': return scheduleCmds.scheduleCmd(sock, from, msg, args, isAdmin);
         case 'schedules': return scheduleCmds.schedulesCmd(sock, from, msg, isAdmin);
         case 'cancel': return scheduleCmds.cancelCmd(sock, from, msg, args, isAdmin);

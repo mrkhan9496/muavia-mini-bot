@@ -16,6 +16,7 @@ async function menuCmd(sock, from, msg) {
         jSec('MAIN', [
             'menu',
             'ping',
+            'mard (random video)',
         ]),
         jSec('SCHEDULER', [
             'schedule <num> | <time> | <msg>',
