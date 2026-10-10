@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getChannelContextInfo } = require('../lib/channel');
-const MENU_VIDEO = path.join(__dirname, '..', 'assets', 'menu-logo.mp4');
+const MENU_IMAGE = path.join(__dirname, '..', 'assets', 'menu-logo.jpg');
 
 function sec(title, cmds) {
     const lines = (cmds || []).filter(Boolean).map(c => `.${c}`);
@@ -143,14 +143,14 @@ async function menuCmd(sock, from, msg) {
         `⚡ Commands: ${cmdCount}\n\n` +
         menuSections.join('\n\n');
 
-    // Pehle video (GIF auto-play), phir poora menu TEXT mein
+    // Pehle image, phir poora menu TEXT mein
+    // (image caption 1024 chars par kat jata hai — is liye alag message)
     let channelCtx = {};
     try { channelCtx = await getChannelContextInfo(sock); } catch {}
-    if (fs.existsSync(MENU_VIDEO)) {
+    if (fs.existsSync(MENU_IMAGE)) {
         await sock.sendMessage(from, {
-            video: fs.readFileSync(MENU_VIDEO),
+            image: fs.readFileSync(MENU_IMAGE),
             caption: '🤖 *BABA SAB JANTA HAI*',
-            gifPlayback: true,
             ...channelCtx
         }, { quoted: msg });
     }
