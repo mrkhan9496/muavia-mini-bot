@@ -142,7 +142,7 @@ async function menuCmd(sock, from, msg) {
         await sock.sendMessage(from, {
             video: fs.readFileSync(MENU_VIDEO),
             caption: '🤖 *BABA SAB JANTA HAI*',
-            gifPlayback: false
+            gifPlayback: true // GIF mode: video khud-ba-khud chalegi, play dabane ki zaroorat nahi
         }, { quoted: msg });
     }
     await sock.sendMessage(from, { text: menuText }, { quoted: msg });
