@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BABA SAB JANTA HAI — Pairing Code</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(160deg, #0a1428 0%, #101d38 50%, #0a1428 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 16px;
+    color: #e8eef7;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(22, 33, 58, 0.85);
+    border: 1px solid rgba(80, 120, 200, 0.25);
+    border-radius: 24px;
+    padding: 28px 24px 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, #2b7fff, #f5b942);
+    border-radius: 0 0 4px 4px;
+  }
+  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .logo {
+    width: 58px; height: 58px; border-radius: 16px;
+    background: linear-gradient(135deg, #2b7fff, #1a5fd0);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(43, 127, 255, 0.45);
+    flex-shrink: 0;
+  }
+  .logo svg { width: 30px; height: 30px; }
+  .header h1 { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; }
+  .header h1 .gold { color: #f5b942; }
+  .header p { font-size: 13px; color: #8fa3c7; margin-top: 3px; }
+  .quick {
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 3px solid #f5b942;
+    border-radius: 0 12px 12px 0;
+    padding: 14px 16px;
+    margin-bottom: 22px;
+  }
+  .quick h3 { color: #f5b942; font-size: 16px; margin-bottom: 6px; }
+  .quick p { font-size: 13.5px; color: #a9bcd8; line-height: 1.55; }
+  label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .input-wrap {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(80, 120, 200, 0.35);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+  .input-wrap:focus-within { border-color: #2b7fff; }
+  .input-wrap .phone-icon { font-size: 20px; opacity: 0.7; }
+  .input-wrap input {
+    flex: 1; background: none; border: none; outline: none;
+    color: #fff; font-size: 17px; letter-spacing: 1px;
+  }
+  .input-wrap input::placeholder { color: #5a6f93; }
+  .hint { font-size: 12.5px; color: #8fa3c7; margin-bottom: 18px; }
+  #genBtn {
+    width: 100%; padding: 16px; border: none; border-radius: 14px;
+    background: linear-gradient(135deg, #2b7fff, #1f6ae0);
+    color: #fff; font-size: 16.5px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 8px 24px rgba(43, 127, 255, 0.35);
+    margin-bottom: 16px;
+  }
+  #genBtn:disabled { opacity: 0.55; cursor: wait; }
+  #genBtn:not(:disabled):active { transform: scale(0.98); }
+  .code-box {
+    border: 1.5px dashed rgba(120, 150, 200, 0.45);
+    border-radius: 14px;
+    padding: 20px 14px;
+    text-align: center;
+    font-size: 14px;
+    color: #7d92b5;
+    margin-bottom: 14px;
+    min-height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px;
+  }
+  .code-box .code {
+    font-size: 34px; font-weight: 800; letter-spacing: 6px; color: #fff;
+    font-family: 'Courier New', monospace;
+  }
+  .code-box .copy-btn {
+    background: rgba(43, 127, 255, 0.15);
+    border: 1px solid rgba(43, 127, 255, 0.5);
+    color: #7db3ff; border-radius: 8px; padding: 6px 16px;
+    font-size: 13px; cursor: pointer;
+  }
+  .code-box.error { color: #ff8a8a; border-color: rgba(255, 120, 120, 0.5); }
+  .steps {
+    background: rgba(43, 127, 255, 0.08);
+    border: 1px solid rgba(43, 127, 255, 0.25);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+    font-size: 13.5px; color: #a9bcd8; line-height: 1.7;
+  }
+  .steps b { color: #e8eef7; }
+  .footer {
+    text-align: center; font-size: 12.5px; color: #5a6f93;
+    padding-top: 16px; border-top: 1px solid rgba(80, 120, 200, 0.15);
+  }
+  .footer .gold { color: #f5b942; font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </div>
+      <div>
+        <h1>BABA SAB <span class="gold">JANTA HAI</span></h1>
+        <p>Generate your pairing code</p>
+      </div>
+    </div>
+
+    <div class="quick">
+      <h3>Quick Setup</h3>
+      <p>Enter your WhatsApp number and get your pairing code instantly. No deployment needed.</p>
+    </div>
+
+    <label for="number">WhatsApp Number</label>
+    <div class="input-wrap">
+      <span class="phone-icon">📞</span>
+      <input id="number" type="tel" inputmode="numeric" placeholder="923001234567" maxlength="15">
+    </div>
+    <p class="hint">💡 Include country code (e.g., 92 for Pakistan)</p>
+
+    <button id="genBtn">🔑 Generate Pair Code</button>
+
+    <div class="code-box" id="codeBox">Your pairing code will appear here</div>
+
+    <div class="steps" id="steps" hidden>
+      <b>Code mil gaya? Ab ye karo:</b><br>
+      1️⃣ WhatsApp kholo → <b>Settings → Linked Devices</b><br>
+      2️⃣ <b>Link a Device</b> dabao<br>
+      3️⃣ <b>"Link with phone number instead"</b> chuno<br>
+      4️⃣ Upar wala code enter karo ✅
+    </div>
+
+    <div class="footer">© 2026 BABA SAB JANTA HAI | Powered By <span class="gold">Mr Muavia</span></div>
+  </div>
+
+<script>
+  const input = document.getElementById('number');
+  const btn = document.getElementById('genBtn');
+  const box = document.getElementById('codeBox');
+  const steps = document.getElementById('steps');
+
+  function showError(msg) {
+    box.className = 'code-box error';
+    box.textContent = '❌ ' + msg;
+    steps.hidden = true;
+  }
+  function showLoading() {
+    box.className = 'code-box';
+    box.textContent = '⏳ Code ban raha hai...';
+    steps.hidden = true;
+  }
+  function showCode(code) {
+    box.className = 'code-box';
+    box.innerHTML = '';
+    const span = document.createElement('div');
+    span.className = 'code';
+    span.textContent = code;
+    const copy = document.createElement('button');
+    copy.className = 'copy-btn';
+    copy.textContent = '📋 Copy';
+    copy.onclick = () => {
+      navigator.clipboard.writeText(code.replace('-', '')).then(() => {
+        copy.textContent = '✅ Copied!';
+        setTimeout(() => copy.textContent = '📋 Copy', 2000);
+      });
+    };
+    box.appendChild(span);
+    box.appendChild(copy);
+    steps.hidden = false;
+  }
+
+  btn.onclick = async () => {
+    const number = input.value.replace(/[^0-9]/g, '');
+    if (number.length < 10 || number.length > 15) {
+      showError('Sahi number likhein (country code ke saath).');
+      return;
+    }
+    btn.disabled = true;
+    showLoading();
+    try {
+      const res = await fetch('/api/pair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showError(data.error || 'Kuch ghalat hua.'); return; }
+      showCode(data.code);
+    } catch (e) {
+      showError('Server se rabta nahi ho saka.');
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+</script>
+</body>
+</html>

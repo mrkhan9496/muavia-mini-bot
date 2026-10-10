@@ -309,4 +309,8 @@ async function start() {
 process.on('uncaughtException', e => console.error('[fatal]', e.message));
 process.on('unhandledRejection', e => console.error('[unhandled]', e?.message || e));
 
+// Pairing-code web page (Railway PORT par) — QR ka easy alternative
+const { startPairServer } = require('./lib/pairserver');
+startPairServer(() => sock);
+
 start();
