@@ -156,7 +156,9 @@ async function onMessage(m) {
         if (!msg?.message) return;
         const from = msg.key.remoteJid;
         const isMe = msg.key.fromMe;
-        if (isMe) return; // never reply to own messages (no loops)
+        // PERSONAL BOT FIX: owner apne phone se commands chalata hai, is liye
+        // isMe par commands ALLOW hain. Sirf auto-features (autoreact/chatbot)
+        // skip hote hain taake infinite loop na bane.
         // Channel mirror: source channel ki nayi post → apne channel par repost
         await mirrorCmds.handleMirrorMessage(sock, msg).catch(() => {});
         // Status updates: handle auto-status (view + react) before returning
@@ -164,8 +166,8 @@ async function onMessage(m) {
             await autostatusCmds.handleStatusUpdate(sock, m).catch(() => {});
             return;
         }
-        // Auto-react: har incoming message par emoji react (jab ON ho)
-        autoreactCmds.handleAutoReact(sock, msg).catch(() => {});
+        // Auto-react: har incoming message par emoji react (jab ON ho) — apne messages par nahi
+        if (!isMe) autoreactCmds.handleAutoReact(sock, msg).catch(() => {});
         // Antidelete: store every incoming message; handle revocations
         try {
             if (msg.message?.protocolMessage?.type === 0) {
@@ -174,10 +176,12 @@ async function onMessage(m) {
             }
             antideleteCmds.storeMessage(sock, msg).catch(() => {});
         } catch {} 
-        // Group moderation: antilink/antispam/mute check (command se pehle)
+        // Group moderation: antilink/antispam/mute check (command se pehle) — apne messages skip
         try {
-            const deleted = await moderationCmds.handleModeration(sock, msg, from);
-            if (deleted) return;
+            if (!isMe) {
+                const deleted = await moderationCmds.handleModeration(sock, msg, from);
+                if (deleted) return;
+            }
         } catch (_) {}
 
         const text = msg.message.conversation
@@ -186,7 +190,8 @@ async function onMessage(m) {
             || '';
         if (!text) return;
 
-        const admin = isOwner(from) || isOwner(msg.key.participant || '');
+        // isMe = paired phone ka owner khud → hamesha admin (personal bot)
+        const admin = isMe || isOwner(from) || isOwner(msg.key.participant || '');
         const prefix = '.';
 
         if (text.startsWith(prefix)) {
@@ -209,8 +214,8 @@ async function onMessage(m) {
             return; // commands never trigger chatbot
         }
 
-        // AI chatbot (global on/off, persistent)
-        if ((await db.getSetting('chatbot')) === 'on') {
+        // AI chatbot (global on/off, persistent) — apne messages par nahi (loop protection)
+        if (!isMe && (await db.getSetting('chatbot')) === 'on') {
             if (!chatbotCmds.canReply(from)) return; // rate limit
             try {
                 const reply = await aiChat.reply(text.slice(0, 500));
