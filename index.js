@@ -65,6 +65,7 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
     switch (cmd) {
         case 'menu': case 'help': return menuCmds.menuCmd(sock, from, msg);
         case 'ping': return menuCmds.pingCmd(sock, from, msg);
+        case 'runtime': return menuCmds.runtimeCmd(sock, from, msg);
         case 'mard': return mardCmds.mardCmd(sock, from, msg);
         case 'sad': return sadCmds.sadCmd(sock, from, msg);
         case 'baap': return baapCmds.baapCmd(sock, from, msg);
