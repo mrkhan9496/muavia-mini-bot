@@ -1,90 +1,93 @@
-/** .menu — command list (JAWAD-style boxes, BABA SAB JANTA HAI branding) */
+/** .menu — simple, readable command list (production bot jaisa style) */
 const fs = require('fs');
 const path = require('path');
-const _scMap = {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ғ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'ǫ',r:'ʀ',s:'s',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ'};
-const toSmallCaps = (s) => String(s || '').toLowerCase().split('').map(ch => _scMap[ch] || ch).join('');
 const MENU_VIDEO = path.join(__dirname, '..', 'assets', 'menu-logo.mp4');
 
-function jSec(title, cmds) {
-    const lines = (cmds || []).filter(Boolean).map(c => `*┋ ⬡ ${toSmallCaps(c)}*`);
+function sec(title, cmds) {
+    const lines = (cmds || []).filter(Boolean).map(c => `  .${c}`);
     if (!lines.length) return '';
-    return '`『 ' + title + ' 』`\n╭───────────────────⊷\n' + lines.join('\n') + '\n╰───────────────────⊷';
+    return `*${title}*\n${lines.join('\n')}`;
 }
 
 async function menuCmd(sock, from, msg) {
     const sections = [
-        jSec('MAIN', [
-            'menu',
-            'ping',
+        sec('MAIN', [
+            'menu — ye list',
+            'ping — speed check',
         ]),
-        jSec('SCHEDULER', [
-            'schedule <num> | <time> | <msg>',
-            'schedules',
-            'cancel <id>',
-            'cancelall',
+        sec('SCHEDULER', [
+            'schedule <num> | <time> | <msg> — message schedule karo',
+            'schedules — pending dekho',
+            'cancel <id> — schedule cancel',
+            'cancelall — sab cancel',
         ]),
-        jSec('CHANNEL', [
-            'channelstatus',
-            'autopost on/off',
-            'settimes 10:00,13:00',
-            'postnow',
-            'cancelpost',
-            'setchannel <jid>',
-            'findchannel <link>',
+        sec('CHANNEL', [
+            'channelstatus — channel info',
+            'autopost on/off — auto posting',
+            'settimes 10:00,13:00 — post times',
+            'postnow — abhi post karo',
+            'cancelpost — aaj ke posts cancel',
+            'setchannel <jid> — channel set',
+            'findchannel <link> — channel dhoondo',
         ]),
-        jSec('AI CHATBOT', [
+        sec('AI CHATBOT', [
             'chatbot on/off/status',
-            'gemini <sawal>',
+            'gemini <sawal> — Gemini se poocho',
         ]),
-        jSec('AI ASSISTANT', [
+        sec('AI ASSISTANT', [
             'ai <sawal> / ask <sawal>',
-            'translate <lang> <text>',
-            'summarize <text>',
+            'translate <lang> <text> — tarjuma',
+            'summarize <text> — khulasa',
         ]),
-        jSec('CREATIVE', [
+        sec('CREATIVE', [
             'shayari [topic]',
             'quote [topic]',
             'caption [topic]',
         ]),
-        jSec('PERSONAL', [
-            'remind 10m <text>',
-            'reminders / unremind <id>',
-            'todo add/list/done/clear',
-            'note <text> / notes / notedel',
+        sec('PERSONAL', [
+            'remind 10m <text> — yaad dilaao',
+            'reminders — list dekho',
+            'unremind <id> — cancel karo',
+            'todo add <task> / list / done <n> / clear',
+            'note <text> — note save karo',
+            'notes — notes dekho',
+            'notedel <n> — note delete',
         ]),
-        jSec('MODERATION', [
-            'antilink on/off',
-            'antispam on/off',
-            'warn @user / unwarn',
+        sec('MODERATION (groups)', [
+            'antilink on/off — links delete',
+            'antispam on/off — spam delete',
+            'warn @user — warning do',
+            'unwarn @user — warning clear',
             'mute / unmute @user',
-            'rules [text]',
-            'autogreet on/off',
+            'rules [text] — rules set/dekho',
+            'autogreet on/off — naye members ko welcome',
         ]),
-        jSec('TOOLS', [
-            'qr <text>',
-            'poll Q? | A | B',
-            'sticker (reply img)',
-            'toimg (reply sticker)',
-            'feedback <msg>',
-            'uptime / apihealth',
+        sec('TOOLS', [
+            'qr <text> — QR code banao',
+            'poll Sawal? | A | B — poll banao',
+            'sticker — reply img ko sticker banao',
+            'toimg — reply sticker ko image banao',
+            'feedback <msg> — owner ko bhejo',
+            'uptime — bot status',
+            'apihealth — API status',
         ]),
-        jSec('DOWNLOAD', [
-            'tiktok <link>',
-            'insta <link>',
-            'fb <link>',
+        sec('DOWNLOAD', [
+            'tiktok <link> — TikTok video',
+            'insta <link> — Instagram video',
+            'fb <link> — Facebook video',
             'pinterest <link>',
-            'movie <naam> (+ archive download)',
-            'moviedl <id> (archive se WhatsApp par)',
-            'series <naam> (public-domain)',
-            'seriesdl <id> (archive se WhatsApp par)',
-            'vv (view-once reply)',
+            'movie <naam> — info + download',
+            'moviedl <id> — archive se bhejo',
+            'series <naam> — series dhoondo',
+            'seriesdl <id> — episode bhejo',
+            'vv — view-once kholo (reply karke)',
         ]),
-        jSec('REALITY', [
-            'mard (random video)',
-            'sad (random sad video)',
-            'baap (random baap video)',
+        sec('REALITY (random video)', [
+            'mard — random video',
+            'sad — random sad video',
+            'baap — random baap video',
         ]),
-        jSec('DAILY LIFE REPLIES', [
+        sec('DAILY LIFE REPLIES', [
             'salam / wsalam / subah / shab',
             'sorry / maafi',
             'shukriya / thanks',
@@ -95,39 +98,40 @@ async function menuCmd(sock, from, msg) {
             'dost / mohabbat',
             'takecare / bye / allahhafiz',
         ]),
-        jSec('STATUS', [
+        sec('STATUS', [
             'autostatus on/off',
             'statusreact <emoji>',
             'autoreact on/off',
         ]),
-        jSec('MIRROR', [
-            'setsource <link>',
+        sec('MIRROR', [
+            'setsource <link> — source channel',
             'mirror on/off',
         ]),
-        jSec('PRIVACY', [
+        sec('PRIVACY', [
             'antidelete on/off',
-            'onetick on/off',
+            'onetick on/off / ghost / singletick',
         ]),
     ].filter(Boolean);
 
     const header =
-`╭━━━〔 🤖 *BABA SAB JANTA HAI* 〕━━━┈⊷
-┃ 👑 Owner: Muavia
-┃ ⚡ Total Commands: 82
-╰━━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
+`🤖 *BABA SAB JANTA HAI*
+👑 Owner: Muavia
+⚡ Total Commands: 82
 
-    const caption = header + sections.join('\n\n') + '\n\n> *© PERSONAL BOT — MUAVIA*';
+`;
 
-    // Menu ke saath logo video bhejo (agar video file maujood hai)
+    const menuText = header + sections.join('\n\n');
+
+    // Pehle video (chhoti caption ke saath), phir poora menu TEXT mein
+    // (video caption sirf 1024 chars — is liye menu alag message mein)
     if (fs.existsSync(MENU_VIDEO)) {
         await sock.sendMessage(from, {
             video: fs.readFileSync(MENU_VIDEO),
-            caption: caption,
+            caption: '🤖 *BABA SAB JANTA HAI*',
             gifPlayback: false
         }, { quoted: msg });
-    } else {
-        await sock.sendMessage(from, { text: caption }, { quoted: msg });
     }
+    await sock.sendMessage(from, { text: menuText }, { quoted: msg });
 }
 
 async function pingCmd(sock, from, msg) {
