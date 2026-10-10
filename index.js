@@ -149,6 +149,11 @@ async function onMessage(m) {
     }
 }
 
+// Ban protection: exponential backoff + session parking (production bot wala proven pattern)
+let consecutiveFailures = 0;
+let sessionParked = false;
+const MAX_FAILURES = 5;
+
 async function start() {
     await db.init();
     if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
@@ -167,6 +172,7 @@ async function start() {
         const { connection, lastDisconnect, qr } = u;
         if (qr) { console.log('Scan QR to pair:'); qrcode.generate(qr, { small: true }); }
         if (connection === 'open') {
+            consecutiveFailures = 0; // kamyab connect par counter reset
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
             // Re-apply ghost mode if it was enabled (persists across restarts)
             onetickCmds.isGhostEnabled().then(en => { if (en) onetickCmds.applyGhostMode(sock, true); }).catch(() => {});
@@ -180,12 +186,27 @@ async function start() {
         if (connection === 'close') {
             const code = lastDisconnect?.error?.output?.statusCode;
             console.log('Connection closed:', code);
-            if (code !== DisconnectReason.loggedOut) {
-                console.log('Reconnecting in 5s...');
-                setTimeout(start, 5000);
-            } else {
-                console.log('Logged out. Delete auth_info/ and restart to re-pair.');
+            // 401 (loggedOut) ya 403 (banned/forbidden) par foran park — retry = ban harden
+            if (code === DisconnectReason.loggedOut || code === 403 || code === DisconnectReason.forbidden) {
+                sessionParked = true;
+                console.log('🛑 Session parked (auth refused/banned). Auto-retry BAND. Dobara pair karo.');
+                return;
             }
+            if (sessionParked) {
+                console.log('🛑 Session parked hai — auto-retry nahi hoga.');
+                return;
+            }
+            // Exponential backoff: 5s -> 10s -> 20s -> 40s -> 60s (cap)
+            // 5 consecutive failures par park
+            if (consecutiveFailures >= MAX_FAILURES) {
+                sessionParked = true;
+                console.log('🛑 5 lagatar failures — session parked (number bachane ke liye). Dobara pair karo.');
+                return;
+            }
+            const delayMs = Math.min(5000 * Math.pow(2, consecutiveFailures), 60000);
+            consecutiveFailures++;
+            console.log(`Reconnecting in ${Math.round(delayMs / 1000)}s (failure ${consecutiveFailures}/${MAX_FAILURES})...`);
+            setTimeout(start, delayMs);
         }
     });
 
