@@ -30,6 +30,7 @@ const mardCmds = require('./commands/mard');
 const sadCmds = require('./commands/sad');
 const baapCmds = require('./commands/baap');
 const dailyLifeCmds = require('./commands/dailylife');
+const seriesCmds = require('./commands/series');
 const movieCmds = require('./commands/movie');
 const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
@@ -81,6 +82,9 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'chatbot': return chatbotCmds.chatbotCmd(sock, from, msg, args);
         case 'gemini': return geminiCmds.geminiCmd(sock, from, msg, args);
         case 'movie': case 'movies': return movieCmds.movieCmd(sock, from, msg, args);
+        case 'moviedl': return movieCmds.moviedlCmd(sock, from, msg, args);
+        case 'series': return seriesCmds.seriesCmd(sock, from, msg, args);
+        case 'seriesdl': return seriesCmds.seriesdlCmd(sock, from, msg, args);
         case 'vv': return vvCmds.vvCmd(sock, from, msg, args);
         case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
         case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);

@@ -9,6 +9,7 @@
  * Trailer links go to YouTube search (legal).
  */
 const axios = require('axios');
+const archive = require('../lib/archive');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const TIMEOUT = 20000;
@@ -119,6 +120,30 @@ async function movieCmd(sock, from, msg, args) {
         `\n_Source: ${source}_`,
     ].filter(Boolean);
 
+    // Internet Archive: public-domain / authorized downloadable copies
+    try {
+        const results = await archive.searchArchive(info.title, 'movie', 3);
+        if (results.length) {
+            lines.push('\n📥 *Download (Public Domain / Authorized):*');
+            for (const r of results) {
+                let fileInfo = '';
+                try {
+                    const files = await archive.getVideoFiles(r.identifier);
+                    if (files.length) {
+                        const f = files[0];
+                        fileInfo = ` — ${f.format}, ${archive.fmtSize(f.size)}`;
+                    }
+                } catch (_) {}
+                lines.push(`\n🎞️ *${r.title}*${r.year ? ` (${r.year})` : ''}${fileInfo}\n🔗 ${r.pageUrl}`);
+            }
+            lines.push(`\n💡 WhatsApp par pane ke liye: .moviedl ${results[0].identifier}`);
+        } else {
+            lines.push('\n📥 *Download:* Is title ka authorized downloadable copy archive.org par nahi mila.');
+        }
+    } catch (e) {
+        lines.push('\n📥 *Download:* Archive search mein error — baad mein try karein.');
+    }
+
     const caption = lines.join('\n');
     try {
         if (info.poster) {
@@ -131,4 +156,76 @@ async function movieCmd(sock, from, msg, args) {
     }
 }
 
-module.exports = { movieCmd };
+module.exports = { movieCmd, moviedlCmd };
+
+/**
+ * .moviedl <identifier> — Internet Archive se public-domain movie download
+ * karke WhatsApp par bhejo. 64MB se bari file ho to direct link do.
+ */
+async function moviedlCmd(sock, from, msg, args) {
+    const identifier = (args || [])[0] && String((args || [])[0]).trim();
+    if (!identifier) {
+        return await sock.sendMessage(from,
+            { text: '❌ Identifier dein.\nExample: .moviedl the-bank-1915-directed-by-charlie-chaplin\nPehle .movie <name> se identifier hasil karein.' },
+            { quoted: msg });
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(identifier)) {
+        return await sock.sendMessage(from,
+            { text: '❌ Ghalat identifier format.' }, { quoted: msg });
+    }
+
+    await sock.sendMessage(from, { react: { text: '⬇️', key: msg.key } });
+    const statusMsg = await sock.sendMessage(from,
+        { text: '⏳ File dhoond raha hoon...' }, { quoted: msg });
+
+    let files;
+    try {
+        files = await archive.getVideoFiles(identifier);
+    } catch (e) {
+        return await sock.sendMessage(from,
+            { text: `❌ File list nahi mil saki: ${e.message}` }, { quoted: msg });
+    }
+    if (!files.length) {
+        return await sock.sendMessage(from,
+            { text: '❌ Is item mein koi downloadable video file nahi mili.' }, { quoted: msg });
+    }
+
+    // Sab se chhoti MP4 prefer karo
+    const mp4s = files.filter(f => f.name.toLowerCase().endsWith('.mp4'));
+    const pick = (mp4s.length ? mp4s : files)[0];
+
+    // Bari file → sirf direct link
+    if (pick.size > archive.MAX_SEND_BYTES) {
+        const links = files.slice(0, 5).map(f =>
+            `🎞️ ${f.name}\n📦 ${archive.fmtSize(f.size)}\n🔗 ${f.url}`).join('\n\n');
+        return await sock.sendMessage(from, {
+            text: `⚠️ File WhatsApp limit (${archive.fmtSize(archive.MAX_SEND_BYTES)}) se bari hai — direct download karein:\n\n${links}\n\n🌐 Full page: https://archive.org/details/${identifier}`,
+        }, { quoted: msg });
+    }
+
+    // Chhoti file → download karke WhatsApp par bhejo
+    try {
+        await sock.sendMessage(from, {
+            text: `⏳ Download ho raha hai: ${pick.name} (${archive.fmtSize(pick.size)})...`,
+        }, { quoted: msg });
+        const dl = await archive.downloadVideo(pick.url, identifier);
+        if (!dl) {
+            const links = files.slice(0, 3).map(f =>
+                `🎞️ ${f.name} (${archive.fmtSize(f.size)})\n🔗 ${f.url}`).join('\n\n');
+            return await sock.sendMessage(from, {
+                text: `⚠️ File WhatsApp par bhejne ke liye bari hai. Direct download karein:\n\n${links}`,
+            }, { quoted: msg });
+        }
+        const fs = require('fs');
+        await sock.sendMessage(from, {
+            video: fs.readFileSync(dl.path),
+            caption: `🎬 *${pick.name}*\n📦 ${archive.fmtSize(dl.size)}\n🌐 Source: https://archive.org/details/${identifier}\n✅ Public Domain / Authorized`,
+        }, { quoted: msg });
+        archive.cleanupTmp(dl.path);
+    } catch (e) {
+        const msg2 = e.message === 'FILE_TOO_LARGE'
+            ? '⚠️ File WhatsApp limit se bari hai.'
+            : `❌ Download mein error: ${e.message}`;
+        await sock.sendMessage(from, { text: msg2 }, { quoted: msg });
+    }
+}

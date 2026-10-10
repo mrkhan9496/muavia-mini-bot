@@ -40,7 +40,10 @@ async function menuCmd(sock, from, msg) {
             'insta <link>',
             'fb <link>',
             'pinterest <link>',
-            'movie <naam>',
+            'movie <naam> (+ archive download)',
+            'moviedl <id> (archive se WhatsApp par)',
+            'series <naam> (public-domain)',
+            'seriesdl <id> (archive se WhatsApp par)',
             'vv (view-once reply)',
         ]),
         jSec('REALITY', [
@@ -77,7 +80,7 @@ async function menuCmd(sock, from, msg) {
     const header =
 `╭━━━〔 🤖 *BABA SAB JANTA HAI* 〕━━━┈⊷
 ┃ 👑 Owner: Muavia
-┃ ⚡ Total Commands: 49
+┃ ⚡ Total Commands: 52
 ╰━━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
 
     const caption = header + sections.join('\n\n') + '\n\n> *© PERSONAL BOT — MUAVIA*';
