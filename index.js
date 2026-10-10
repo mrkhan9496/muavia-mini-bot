@@ -16,6 +16,7 @@ const {
 const qrcode = require('qrcode-terminal');
 
 const db = require('./lib/db');
+const branding = require('./lib/branding');
 const scheduler = require('./lib/scheduler');
 const channelPost = require('./lib/channelPost');
 const aiChat = require('./lib/aiChat');
@@ -183,6 +184,7 @@ async function start() {
         browser: ['SchedulerBot', 'Chrome', '1.0'],
     });
     sock.ev.on('creds.update', saveCreds);
+    branding.wrapSocket(sock); // GLOBAL BRANDING: har outgoing message auto-branded
 
     sock.ev.on('connection.update', (u) => {
         const { connection, lastDisconnect, qr } = u;
@@ -190,6 +192,12 @@ async function start() {
         if (connection === 'open') {
             consecutiveFailures = 0; // kamyab connect par counter reset
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
+            // WhatsApp profile bio set karo (sirf zaroorat par, har message par nahi)
+            branding.ensureBio(sock).then(r => {
+                if (r.ok && r.updated) console.log('📝 Bio set ho gayi.');
+                else if (r.ok) console.log('📝 Bio pehle se set hai.');
+                else console.log('📝 Bio set nahi ho saki:', r.reason);
+            }).catch(() => {});
             // Re-apply ghost mode if it was enabled (persists across restarts)
             onetickCmds.isGhostEnabled().then(en => { if (en) onetickCmds.applyGhostMode(sock, true); }).catch(() => {});
             // Re-follow mirror source channel (taake uski posts milti rahein)
