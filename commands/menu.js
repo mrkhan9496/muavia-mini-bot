@@ -1,6 +1,7 @@
 /** .menu — MR MUAVIA MD BOT wala exact style (JAWAD boxes + small-caps) */
 const fs = require('fs');
 const path = require('path');
+const { getChannelContextInfo } = require('../lib/channel');
 const MENU_VIDEO = path.join(__dirname, '..', 'assets', 'menu-logo.mp4');
 
 const _scMap = {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ғ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'ǫ',r:'ʀ',s:'s',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ'};
@@ -138,14 +139,18 @@ async function menuCmd(sock, from, msg) {
 
     // Pehle video (chhoti caption), phir poora menu TEXT mein
     // (video caption 1024 chars par kat jata hai — is liye alag message)
+    // Dono par "View channel" badge (production bot jaisa)
+    let channelCtx = {};
+    try { channelCtx = await getChannelContextInfo(sock); } catch {}
     if (fs.existsSync(MENU_VIDEO)) {
         await sock.sendMessage(from, {
             video: fs.readFileSync(MENU_VIDEO),
             caption: '🤖 *BABA SAB JANTA HAI*',
-            gifPlayback: true // GIF mode: video khud-ba-khud chalegi, play dabane ki zaroorat nahi
+            gifPlayback: true, // GIF mode: video khud-ba-khud chalegi
+            ...channelCtx
         }, { quoted: msg });
     }
-    await sock.sendMessage(from, { text: menuText }, { quoted: msg });
+    await sock.sendMessage(from, { text: menuText, ...channelCtx }, { quoted: msg });
 }
 
 async function pingCmd(sock, from, msg) {

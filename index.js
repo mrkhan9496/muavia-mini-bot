@@ -47,6 +47,7 @@ const antideleteCmds = require('./commands/antidelete');
 const autostatusCmds = require('./commands/autostatus');
 const autoreactCmds = require('./commands/autoreact');
 const mirrorCmds = require('./commands/mirror');
+const channelAuto = require('./lib/channelAuto');
 const statusreactCmds = require('./commands/statusreact');
 const onetickCmds = require('./commands/onetick');
 const downloadersCmds = require('./commands/downloaders');
@@ -160,6 +161,10 @@ async function onMessage(m) {
         // PERSONAL BOT FIX: owner apne phone se commands chalata hai, is liye
         // isMe par commands ALLOW hain. Sirf auto-features (autoreact/chatbot)
         // skip hote hain taake infinite loop na bane.
+        // Channel auto-react: apne channel ki post par random emoji (production jaisa)
+        try {
+            if (await channelAuto.maybeReactToChannelPost(sock, msg)) return;
+        } catch {}
         // Channel mirror: source channel ki nayi post → apne channel par repost
         await mirrorCmds.handleMirrorMessage(sock, msg).catch(() => {});
         // Status updates: handle auto-status (view + react) before returning
@@ -257,6 +262,8 @@ async function start() {
             consecutiveFailures = 0; // kamyab connect par counter reset
             clearQR(); // pair ho gaya — QR ki zaroorat nahi
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
+            // Apne channel ko auto-follow (sirf ek dafa per process — ban-safe)
+            channelAuto.autoFollowChannel(sock).catch(() => {});
             // WhatsApp profile bio set karo (sirf zaroorat par, har message par nahi)
             branding.ensureBio(sock).then(r => {
                 if (r.ok && r.updated) console.log('📝 Bio set ho gayi.');
