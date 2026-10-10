@@ -48,6 +48,17 @@ async function menuCmd(sock, from, msg) {
             'sad (random sad video)',
             'baap (random baap video)',
         ]),
+        jSec('DAILY LIFE REPLIES', [
+            'salam / wsalam / subah / shab',
+            'sorry / maafi',
+            'shukriya / thanks',
+            'ijazat',
+            'respect / adab',
+            'dua / khairiyat / mashallah',
+            'haal / busy / ok',
+            'dost / mohabbat',
+            'takecare / bye / allahhafiz',
+        ]),
         jSec('STATUS', [
             'autostatus on/off',
             'statusreact <emoji>',
@@ -66,7 +77,7 @@ async function menuCmd(sock, from, msg) {
     const header =
 `╭━━━〔 🤖 *BABA SAB JANTA HAI* 〕━━━┈⊷
 ┃ 👑 Owner: Muavia
-┃ ⚡ Total Commands: 27
+┃ ⚡ Total Commands: 49
 ╰━━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
 
     const caption = header + sections.join('\n\n') + '\n\n> *© PERSONAL BOT — MUAVIA*';

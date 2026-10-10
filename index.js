@@ -28,6 +28,7 @@ const menuCmds = require('./commands/menu');
 const mardCmds = require('./commands/mard');
 const sadCmds = require('./commands/sad');
 const baapCmds = require('./commands/baap');
+const dailyLifeCmds = require('./commands/dailylife');
 const movieCmds = require('./commands/movie');
 const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
@@ -55,6 +56,17 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'mard': return mardCmds.mardCmd(sock, from, msg);
         case 'sad': return sadCmds.sadCmd(sock, from, msg);
         case 'baap': return baapCmds.baapCmd(sock, from, msg);
+        // Daily Life Reply commands
+        case 'salam': case 'wsalam': case 'subah': case 'shab':
+        case 'sorry': case 'maafi':
+        case 'shukriya': case 'thanks':
+        case 'ijazat':
+        case 'respect': case 'adab':
+        case 'dua': case 'khairiyat': case 'mashallah':
+        case 'haal': case 'busy': case 'ok':
+        case 'dost': case 'mohabbat':
+        case 'takecare': case 'bye': case 'allahhafiz':
+            return dailyLifeCmds.dailyLifeCmd(sock, from, msg, cmd, args);
         case 'schedule': return scheduleCmds.scheduleCmd(sock, from, msg, args, isAdmin);
         case 'schedules': return scheduleCmds.schedulesCmd(sock, from, msg, isAdmin);
         case 'cancel': return scheduleCmds.cancelCmd(sock, from, msg, args, isAdmin);
@@ -122,7 +134,11 @@ async function onMessage(m) {
             const [raw, ...args] = text.slice(1).trim().split(/\s+/);
             const cmd = raw.toLowerCase();
             // admin-only commands
-            const adminOnly = ['schedule', 'schedules', 'cancel', 'cancelall', 'autopost', 'settimes', 'postnow', 'setchannel', 'findchannel', 'chatbot'];
+            const adminOnly = ['schedule', 'schedules', 'cancel', 'cancelall', 'autopost', 'settimes', 'postnow', 'setchannel', 'findchannel', 'chatbot',
+                // Daily Life Reply commands (owner ke personal replies)
+                'salam', 'wsalam', 'subah', 'shab', 'sorry', 'maafi', 'shukriya', 'thanks',
+                'ijazat', 'respect', 'adab', 'dua', 'khairiyat', 'mashallah',
+                'haal', 'busy', 'ok', 'dost', 'mohabbat', 'takecare', 'bye', 'allahhafiz'];
             if (adminOnly.includes(cmd) && !admin) {
                 await sock.sendMessage(from, { text: '❌ Owner only.' }, { quoted: msg });
                 return;
