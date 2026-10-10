@@ -113,4 +113,17 @@ async function findchannelCmd(sock, from, msg, args) {
     }
 }
 
-module.exports = { channelStatusCmd, autopostCmd, settimesCmd, postnowCmd, setchannelCmd, findchannelCmd };
+/**
+ * .cancelpost — aaj ke baqi scheduled channel posts cancel karo.
+ * (autopost ON rehta hai, kal se dobara post honge)
+ */
+async function cancelpostCmd(sock, from, msg) {
+    const db = require('../lib/db');
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Karachi' });
+    await db.setSetting('cancelled_' + today, '1');
+    await sock.sendMessage(from, {
+        text: '✅ Aaj ke baqi channel posts cancel ho gaye.\n(Autopost kal se dobara chalega)',
+    }, { quoted: msg });
+}
+
+module.exports = { channelStatusCmd, autopostCmd, settimesCmd, postnowCmd, setchannelCmd, findchannelCmd, cancelpostCmd };

@@ -31,6 +31,16 @@ const sadCmds = require('./commands/sad');
 const baapCmds = require('./commands/baap');
 const dailyLifeCmds = require('./commands/dailylife');
 const seriesCmds = require('./commands/series');
+const aiCmds = require('./commands/ai');
+const creativeCmds = require('./commands/creative');
+const personalCmds = require('./commands/personal');
+const monitorCmds = require('./commands/monitor');
+const qrCmds = require('./commands/qr');
+const pollCmds = require('./commands/poll');
+const feedbackCmds = require('./commands/feedback');
+const autogreetCmds = require('./commands/autogreet');
+const stickerCmds = require('./commands/sticker');
+const moderationCmds = require('./commands/moderation');
 const movieCmds = require('./commands/movie');
 const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
@@ -85,6 +95,44 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'moviedl': return movieCmds.moviedlCmd(sock, from, msg, args);
         case 'series': return seriesCmds.seriesCmd(sock, from, msg, args);
         case 'seriesdl': return seriesCmds.seriesdlCmd(sock, from, msg, args);
+        // AI Assistant
+        case 'ai': case 'ask': return aiCmds.aiCmd(sock, from, msg, args);
+        case 'translate': return aiCmds.translateCmd(sock, from, msg, args);
+        case 'summarize': return aiCmds.summarizeCmd(sock, from, msg, args);
+        // Creative
+        case 'shayari': return creativeCmds.shayariCmd(sock, from, msg, args);
+        case 'quote': return creativeCmds.quoteCmd(sock, from, msg, args);
+        case 'caption': return creativeCmds.captionCmd(sock, from, msg, args);
+        // Personal utilities
+        case 'remind': return personalCmds.remindCmd(sock, from, msg, args);
+        case 'reminders': return personalCmds.remindersCmd(sock, from, msg);
+        case 'unremind': return personalCmds.unremindCmd(sock, from, msg, args);
+        case 'todo': return personalCmds.todoCmd(sock, from, msg, args);
+        case 'note': return personalCmds.noteCmd(sock, from, msg, args);
+        case 'notes': return personalCmds.notesCmd(sock, from, msg);
+        case 'notedel': return personalCmds.notedelCmd(sock, from, msg, args);
+        // Monitoring
+        case 'uptime': return monitorCmds.uptimeCmd(sock, from, msg);
+        case 'apihealth': return monitorCmds.apihealthCmd(sock, from, msg);
+        // QR + Poll
+        case 'qr': return qrCmds.qrCmd(sock, from, msg, args);
+        case 'poll': return pollCmds.pollCmd(sock, from, msg, args);
+        // Feedback + Autogreet
+        case 'feedback': return feedbackCmds.feedbackCmd(sock, from, msg, args);
+        case 'autogreet': return autogreetCmds.autogreetCmd(sock, from, msg, args, admin);
+        // Stickers
+        case 'sticker': return stickerCmds.stickerCmd(sock, from, msg);
+        case 'toimg': return stickerCmds.toimgCmd(sock, from, msg);
+        // Group moderation
+        case 'antilink': return moderationCmds.antilinkCmd(sock, from, msg, args, admin);
+        case 'antispam': return moderationCmds.antispamCmd(sock, from, msg, args, admin);
+        case 'warn': return moderationCmds.warnCmd(sock, from, msg, args, admin);
+        case 'unwarn': return moderationCmds.unwarnCmd(sock, from, msg, args, admin);
+        case 'mute': return moderationCmds.muteCmd(sock, from, msg, args, admin, false);
+        case 'unmute': return moderationCmds.muteCmd(sock, from, msg, args, admin, true);
+        case 'rules': return moderationCmds.rulesCmd(sock, from, msg, args, admin);
+        // Channel
+        case 'cancelpost': return channelCmds.cancelpostCmd(sock, from, msg);
         case 'vv': return vvCmds.vvCmd(sock, from, msg, args);
         case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
         case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
@@ -126,6 +174,12 @@ async function onMessage(m) {
             }
             antideleteCmds.storeMessage(sock, msg).catch(() => {});
         } catch {} 
+        // Group moderation: antilink/antispam/mute check (command se pehle)
+        try {
+            const deleted = await moderationCmds.handleModeration(sock, msg, from);
+            if (deleted) return;
+        } catch (_) {}
+
         const text = msg.message.conversation
             || msg.message.extendedTextMessage?.text
             || msg.message.imageMessage?.caption
@@ -139,7 +193,7 @@ async function onMessage(m) {
             const [raw, ...args] = text.slice(1).trim().split(/\s+/);
             const cmd = raw.toLowerCase();
             // admin-only commands
-            const adminOnly = ['schedule', 'schedules', 'cancel', 'cancelall', 'autopost', 'settimes', 'postnow', 'setchannel', 'findchannel', 'chatbot',
+            const adminOnly = ['schedule', 'schedules', 'cancel', 'cancelall', 'autopost', 'settimes', 'postnow', 'setchannel', 'findchannel', 'chatbot', 'cancelpost',
                 // Daily Life Reply commands (owner ke personal replies)
                 'salam', 'wsalam', 'subah', 'shab', 'sorry', 'maafi', 'shukriya', 'thanks',
                 'ijazat', 'respect', 'adab', 'dua', 'khairiyat', 'mashallah',
@@ -210,6 +264,8 @@ async function start() {
             }).catch(() => {});
             scheduler.start(sock);
             channelPost.start(sock);
+            // Pending reminders dobara arm karo (restart-safe)
+            personalCmds.initReminders(sock).catch(() => {});
         }
         if (connection === 'close') {
             const code = lastDisconnect?.error?.output?.statusCode;
@@ -239,6 +295,15 @@ async function start() {
     });
 
     sock.ev.on('messages.upsert', onMessage);
+
+    // Naye group members → autogreet
+    sock.ev.on('group-participants.update', async (u) => {
+        try {
+            if (u.action === 'add' && u.participants && u.participants.length) {
+                await autogreetCmds.handleMemberAdd(sock, u.id, u.participants);
+            }
+        } catch (_) {}
+    });
 }
 
 process.on('uncaughtException', e => console.error('[fatal]', e.message));

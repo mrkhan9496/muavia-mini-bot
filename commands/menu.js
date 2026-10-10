@@ -28,12 +28,45 @@ async function menuCmd(sock, from, msg) {
             'autopost on/off',
             'settimes 10:00,13:00',
             'postnow',
+            'cancelpost',
             'setchannel <jid>',
             'findchannel <link>',
         ]),
         jSec('AI CHATBOT', [
             'chatbot on/off/status',
             'gemini <sawal>',
+        ]),
+        jSec('AI ASSISTANT', [
+            'ai <sawal> / ask <sawal>',
+            'translate <lang> <text>',
+            'summarize <text>',
+        ]),
+        jSec('CREATIVE', [
+            'shayari [topic]',
+            'quote [topic]',
+            'caption [topic]',
+        ]),
+        jSec('PERSONAL', [
+            'remind 10m <text>',
+            'reminders / unremind <id>',
+            'todo add/list/done/clear',
+            'note <text> / notes / notedel',
+        ]),
+        jSec('MODERATION', [
+            'antilink on/off',
+            'antispam on/off',
+            'warn @user / unwarn',
+            'mute / unmute @user',
+            'rules [text]',
+            'autogreet on/off',
+        ]),
+        jSec('TOOLS', [
+            'qr <text>',
+            'poll Q? | A | B',
+            'sticker (reply img)',
+            'toimg (reply sticker)',
+            'feedback <msg>',
+            'uptime / apihealth',
         ]),
         jSec('DOWNLOAD', [
             'tiktok <link>',
@@ -80,7 +113,7 @@ async function menuCmd(sock, from, msg) {
     const header =
 `╭━━━〔 🤖 *BABA SAB JANTA HAI* 〕━━━┈⊷
 ┃ 👑 Owner: Muavia
-┃ ⚡ Total Commands: 52
+┃ ⚡ Total Commands: 82
 ╰━━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
 
     const caption = header + sections.join('\n\n') + '\n\n> *© PERSONAL BOT — MUAVIA*';
