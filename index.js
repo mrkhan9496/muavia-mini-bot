@@ -246,9 +246,10 @@ async function start() {
 
     sock.ev.on('connection.update', (u) => {
         const { connection, lastDisconnect, qr } = u;
-        if (qr) { console.log('Scan QR to pair:'); qrcode.generate(qr, { small: true }); }
+        if (qr) { console.log('Scan QR to pair:'); qrcode.generate(qr, { small: true }); setLatestQR(qr); }
         if (connection === 'open') {
             consecutiveFailures = 0; // kamyab connect par counter reset
+            clearQR(); // pair ho gaya — QR ki zaroorat nahi
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
             // WhatsApp profile bio set karo (sirf zaroorat par, har message par nahi)
             branding.ensureBio(sock).then(r => {
@@ -310,7 +311,7 @@ process.on('uncaughtException', e => console.error('[fatal]', e.message));
 process.on('unhandledRejection', e => console.error('[unhandled]', e?.message || e));
 
 // Pairing-code web page (Railway PORT par) — QR ka easy alternative
-const { startPairServer } = require('./lib/pairserver');
+const { startPairServer, setLatestQR, clearQR } = require('./lib/pairserver');
 startPairServer(() => sock);
 
 start();

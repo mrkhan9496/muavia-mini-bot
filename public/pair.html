@@ -118,6 +118,25 @@
     padding-top: 16px; border-top: 1px solid rgba(80, 120, 200, 0.15);
   }
   .footer .gold { color: #f5b942; font-weight: 700; }
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 6px 0 16px; color: #5a6f93; font-size: 13px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: rgba(80, 120, 200, 0.25);
+  }
+  .qr-section { text-align: center; margin-bottom: 16px; }
+  .qr-section h3 { font-size: 15px; margin-bottom: 12px; color: #e8eef7; }
+  #qrBox {
+    display: inline-block; background: #fff; border-radius: 14px;
+    padding: 12px; min-width: 200px; min-height: 200px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  #qrBox img { width: 220px; height: 220px; border-radius: 8px; display: block; }
+  #qrBox .qr-loading, #qrBox .qr-msg { color: #5a6f93; font-size: 13px; padding: 20px; }
+  #qrBox .qr-done { color: #2b7fff; font-size: 14px; font-weight: 700; padding: 20px; }
+  .qr-hint { font-size: 12.5px; color: #8fa3c7; margin-top: 10px; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -154,6 +173,14 @@
       2️⃣ <b>Link a Device</b> dabao<br>
       3️⃣ <b>"Link with phone number instead"</b> chuno<br>
       4️⃣ Upar wala code enter karo ✅
+    </div>
+
+    <div class="divider">YA</div>
+
+    <div class="qr-section">
+      <h3>📱 QR Code Scan Karo</h3>
+      <div id="qrBox"><div class="qr-loading">⏳ QR load ho raha hai...</div></div>
+      <p class="qr-hint">WhatsApp → Settings → Linked Devices → Link a Device → Scan karo<br>⚡ QR har thodi der mein refresh hota hai</p>
     </div>
 
     <div class="footer">© 2026 BABA SAB JANTA HAI | Powered By <span class="gold">Mr Muavia</span></div>
@@ -219,6 +246,28 @@
     }
   };
   input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+
+  // QR code auto-refresh (har 20 second — QR expire hota hai)
+  const qrBox = document.getElementById('qrBox');
+  async function loadQR() {
+    try {
+      const res = await fetch('/api/qr');
+      const data = await res.json();
+      if (data.paired) {
+        qrBox.innerHTML = '<div class="qr-done">✅ Bot pehle se paired hai!</div>';
+        return;
+      }
+      if (data.qr) {
+        qrBox.innerHTML = '<img src="' + data.qr + '" alt="QR Code">';
+      } else {
+        qrBox.innerHTML = '<div class="qr-msg">⏳ ' + (data.message || 'QR ban raha hai...') + '</div>';
+      }
+    } catch (e) {
+      qrBox.innerHTML = '<div class="qr-msg">❌ QR load nahi hua.</div>';
+    }
+  }
+  loadQR();
+  setInterval(loadQR, 20000);
 </script>
 </body>
 </html>
