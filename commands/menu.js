@@ -1,160 +1,58 @@
-/** .menu — bilkul simple style: har command alag line mein, saaf-saaf */
+/** .menu — boxed style (user ki exact requirement), image + text EK message mein */
 const fs = require('fs');
 const path = require('path');
 const { getChannelContextInfo } = require('../lib/channel');
 const MENU_IMAGE = path.join(__dirname, '..', 'assets', 'menu-logo.jpg');
 
-function sec(title, cmds) {
-    const lines = (cmds || []).filter(Boolean).map(c => `.${c}`);
-    if (!lines.length) return '';
-    return `*${title}*\n${lines.join('\n')}`;
-}
-
 async function menuCmd(sock, from, msg) {
-    const menuSections = [];
-
-    const push = (title, cmds) => {
-        const s = sec(title, cmds);
-        if (s) menuSections.push(s);
-    };
-
-    push('MAIN', [
-        'menu',
-        'ping',
-        'runtime',
-        'uptime',
-    ]);
-    push('SCHEDULER', [
-        'schedule',
-        'schedules',
-        'cancel',
-        'cancelall',
-    ]);
-    push('CHANNEL', [
-        'channelstatus',
-        'autopost',
-        'settimes',
-        'postnow',
-        'cancelpost',
-        'setchannel',
-        'findchannel',
-    ]);
-    push('AI CHATBOT', [
-        'chatbot',
-        'gemini',
-    ]);
-    push('AI ASSISTANT', [
-        'ai',
-        'ask',
-        'translate',
-        'summarize',
-    ]);
-    push('CREATIVE', [
-        'shayari',
-        'quote',
-        'caption',
-    ]);
-    push('PERSONAL', [
-        'remind',
-        'reminders',
-        'unremind',
-        'todo',
-        'note',
-        'notes',
-        'notedel',
-    ]);
-    push('MODERATION', [
-        'antilink',
-        'antispam',
-        'warn',
-        'unwarn',
-        'mute',
-        'unmute',
-        'rules',
-        'autogreet',
-    ]);
-    push('TOOLS', [
-        'qr',
-        'poll',
-        'sticker',
-        'toimg',
-        'feedback',
-        'apihealth',
-    ]);
-    push('DOWNLOAD', [
-        'tiktok',
-        'insta',
-        'fb',
-        'pinterest',
-        'movie',
-        'moviedl',
-        'series',
-        'seriesdl',
-        'vv',
-    ]);
-    push('REALITY', [
-        'mard',
-        'sad',
-        'baap',
-    ]);
-    push('DAILY LIFE', [
-        'salam',
-        'wsalam',
-        'subah',
-        'shab',
-        'sorry',
-        'maafi',
-        'shukriya',
-        'thanks',
-        'ijazat',
-        'respect',
-        'adab',
-        'dua',
-        'khairiyat',
-        'mashallah',
-        'haal',
-        'busy',
-        'ok',
-        'dost',
-        'mohabbat',
-        'takecare',
-        'bye',
-        'allahhafiz',
-    ]);
-    push('STATUS', [
-        'autostatus',
-        'statusreact',
-        'autoreact',
-    ]);
-    push('MIRROR', [
-        'setsource',
-        'mirror',
-    ]);
-    push('PRIVACY', [
-        'antidelete',
-        'onetick',
-    ]);
-
-    const cmdCount = menuSections.reduce((n, s) => n + (s.match(/^\./gm) || []).length, 0);
-
+    // Boxed menu — 1024 char caption limit ke andar
     const menuText =
-        `🤖 *BABA SAB JANTA HAI*\n` +
-        `👑 Owner: Muavia\n` +
-        `⚡ Commands: ${cmdCount}\n\n` +
-        menuSections.join('\n\n');
+`╭━━━〔 BABA SAB JANTA HAI 〕━━━╮
+┃ 👑 Owner: Muavia
+┣━━〔 📥 DOWNLOAD MENU 〕━━
+┃ .tiktok .insta .facebook .pinterest
+┃ .movie .moviedl .series .seriesdl .vv
+┣━━〔 🤖 AI MENU 〕━━
+┃ .ai .ask .gemini .chatbot
+┃ .translate .summarize .shayari
+┃ .quote .caption
+┣━━〔 🧰 TOOLS MENU 〕━━
+┃ .qr .poll .sticker .toimg .feedback
+┃ .uptime .apihealth .runtime .ping
+┃ .remind .todo .note .schedule
+┣━━〔 🎉 FUN MENU 〕━━
+┃ .mard .sad .baap
+┣━━〔 ⚙️ UTILITY MENU 〕━━
+┃ .menu .help .autopost .settimes
+┃ .postnow .setchannel .channelstatus
+┃ .antilink .antispam .warn .mute
+┃ .rules .autogreet .autostatus
+┃ .autoreact .antidelete .onetick
+┃ .mirror .setsource
+┣━━〔 💬 DAILY LIFE 〕━━
+┃ .salam .wsalam .subah .shab
+┃ .sorry .maafi .shukriya .thanks
+┃ .ijazat .respect .adab .dua
+┃ .khairiyat .mashallah .haal .busy
+┃ .ok .dost .mohabbat .takecare
+┃ .bye .allahhafiz
+╰━━━━━━━━━━━━━━━━━━━━╯`;
 
-    // Pehle image, phir poora menu TEXT mein
-    // (image caption 1024 chars par kat jata hai — is liye alag message)
+    // Image + menu caption EK HI message mein (user ki requirement)
+    // Caption limit 1024 chars — ye menu uske andar hai
     let channelCtx = {};
     try { channelCtx = await getChannelContextInfo(sock); } catch {}
+
     if (fs.existsSync(MENU_IMAGE)) {
         await sock.sendMessage(from, {
             image: fs.readFileSync(MENU_IMAGE),
-            caption: '🤖 *BABA SAB JANTA HAI*',
+            caption: menuText,
             ...channelCtx
         }, { quoted: msg });
+    } else {
+        // Image na mile to text mein bhejo
+        await sock.sendMessage(from, { text: menuText, ...channelCtx }, { quoted: msg });
     }
-    await sock.sendMessage(from, { text: menuText, ...channelCtx }, { quoted: msg });
 }
 
 async function pingCmd(sock, from, msg) {
