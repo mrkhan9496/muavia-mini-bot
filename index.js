@@ -240,6 +240,19 @@ let consecutiveFailures = 0;
 let sessionParked = false;
 const MAX_FAILURES = 5;
 
+/**
+ * Pairing page se call hota hai: parked/dead session ko unpark karke
+ * fresh socket start karo taake pairing code/QR kaam kare.
+ */
+async function requestSocketRestart() {
+    sessionParked = false;
+    consecutiveFailures = 0;
+    console.log('[pair] Socket restart requested — unparking session.');
+    // Purana socket band karo (agar khula hai)
+    try { sock?.ws?.close(); } catch {}
+    await start();
+}
+
 async function start() {
     await db.init();
     if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
@@ -325,6 +338,6 @@ process.on('unhandledRejection', e => console.error('[unhandled]', e?.message ||
 
 // Pairing-code web page (Railway PORT par) — QR ka easy alternative
 const { startPairServer, setLatestQR, clearQR } = require('./lib/pairserver');
-startPairServer(() => sock);
+startPairServer(() => sock, requestSocketRestart);
 
 start();
