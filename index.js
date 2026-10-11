@@ -256,7 +256,9 @@ async function requestSocketRestart() {
 async function start() {
     await db.init();
     if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
-    const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+    // DATABASE_URL ho to session DB mein (redeploy-proof), warna files
+    const { getAuthState } = require('./lib/dbAuthState');
+    const { state, saveCreds } = await getAuthState('mini-bot', AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
 
     sock = makeWASocket({
