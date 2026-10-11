@@ -184,6 +184,11 @@
     </div>
 
     <div class="footer">© 2026 BABA SAB JANTA HAI | Powered By <span class="gold">Mr Muavia</span></div>
+
+    <div style="text-align:center; margin-top:12px;">
+      <button id="resetBtn" style="background:#3a2a2a; color:#ff8888; border:1px solid #5a3a3a; border-radius:10px; padding:8px 16px; font-size:12px; cursor:pointer;">🔄 Session Reset (agar kuch kaam na kare)</button>
+      <p id="resetMsg" style="font-size:12px; color:#8fa3c7; margin-top:8px;"></p>
+    </div>
   </div>
 
 <script>
@@ -268,6 +273,23 @@
   }
   loadQR();
   setInterval(loadQR, 20000);
+
+  // Session reset button
+  const resetBtn = document.getElementById('resetBtn');
+  const resetMsg = document.getElementById('resetMsg');
+  resetBtn.addEventListener('click', async () => {
+    if (!confirm('Session reset karein? Bot restart hoga.')) return;
+    resetBtn.disabled = true;
+    resetMsg.textContent = '⏳ Reset ho raha hai...';
+    try {
+      const res = await fetch('/api/reset', { method: 'POST' });
+      const data = await res.json();
+      resetMsg.textContent = '✅ ' + (data.message || 'Reset ho gaya! 1 minute baad page refresh karo.');
+    } catch (e) {
+      resetMsg.textContent = '❌ Reset nahi ho saka.';
+      resetBtn.disabled = false;
+    }
+  });
 </script>
 </body>
 </html>
