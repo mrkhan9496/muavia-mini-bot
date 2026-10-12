@@ -27,7 +27,8 @@ async function menuCmd(sock, from, msg) {
 ┃ .postnow .setchannel .channelstatus
 ┃ .antilink .antispam .warn .mute
 ┃ .rules .autogreet .autostatus
-┃ .autoreact .antidelete .onetick
+┃ .autoreact .antidelete .antiviewonce
+┃ .alwaysonline .onetick
 ┃ .mirror .setsource
 ┣━━〔 💬 DAILY LIFE 〕━━
 ┃ .salam .wsalam .subah .shab
