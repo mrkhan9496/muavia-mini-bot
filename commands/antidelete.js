@@ -55,7 +55,8 @@ async function downloadBuffer(msgContent, type) {
 }
 
 async function isEnabled() {
-    return (await db.getSetting('antidelete')) === 'on';
+    // Default ON — sirf explicit 'off' par band
+    return (await db.getSetting('antidelete')) !== 'off';
 }
 
 // ---------------- command ----------------
