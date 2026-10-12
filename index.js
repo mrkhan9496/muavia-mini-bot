@@ -44,6 +44,8 @@ const moderationCmds = require('./commands/moderation');
 const movieCmds = require('./commands/movie');
 const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
+const antiviewonceCmds = require('./commands/antiviewonce');
+const alwaysonlineCmds = require('./commands/alwaysonline');
 const autostatusCmds = require('./commands/autostatus');
 const autoreactCmds = require('./commands/autoreact');
 const mirrorCmds = require('./commands/mirror');
@@ -137,6 +139,8 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'cancelpost': return channelCmds.cancelpostCmd(sock, from, msg);
         case 'vv': return vvCmds.vvCmd(sock, from, msg, args);
         case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
+        case 'antiviewonce': return antiviewonceCmds.antiviewonceCmd(sock, from, msg, args, admin);
+        case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, admin);
         case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
         case 'autoreact': return autoreactCmds.autoreactCmd(sock, from, msg, args, isAdmin);
         case 'setsource': return mirrorCmds.setsourceCmd(sock, from, msg, args);
@@ -181,7 +185,11 @@ async function onMessage(m) {
                 return;
             }
             antideleteCmds.storeMessage(sock, msg).catch(() => {});
-        } catch {} 
+        } catch {}
+        // Anti-viewonce: auto-capture view-once image/video/voice → owner DM
+        try {
+            await antiviewonceCmds.handleViewOnce(sock, msg).catch(() => {});
+        } catch {}
         // Group moderation: antilink/antispam/mute check (command se pehle) — apne messages skip
         try {
             if (!isMe) {
@@ -293,6 +301,8 @@ async function start() {
             }).catch(() => {});
             scheduler.start(sock);
             channelPost.start(sock);
+            // Always-online: hamesha "online" show (default ON)
+            alwaysonlineCmds.startPresenceLoop(sock);
             // Pending reminders dobara arm karo (restart-safe)
             personalCmds.initReminders(sock).catch(() => {});
         }
