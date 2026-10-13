@@ -28,7 +28,7 @@ async function menuCmd(sock, from, msg) {
 ┃ .antilink .antispam .warn .mute
 ┃ .rules .autogreet .autostatus
 ┃ .autoreact .antidelete .antiviewonce
-┃ .alwaysonline .onetick
+┃ .alwaysonline .onetick .gs
 ┃ .mirror .setsource
 ┣━━〔 💬 DAILY LIFE 〕━━
 ┃ .salam .wsalam .subah .shab
