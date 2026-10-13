@@ -56,18 +56,18 @@ const statusreactCmds = require('./commands/statusreact');
 const onetickCmds = require('./commands/onetick');
 const downloadersCmds = require('./commands/downloaders');
 
+const sessions = require('./lib/sessions');
+
 const OWNER = (process.env.OWNER_NUMBER || '').replace(/[^0-9]/g, '');
 const AUTH_DIR = path.join(process.cwd(), 'auth_info');
-
-let sock = null;
-let lastConnState = 'close'; // 'connecting' | 'open' | 'close' — pairserver ke liye
 
 function isOwner(jid) {
     const num = jidNormalizedUser(jid).split('@')[0].replace(/[^0-9]/g, '');
     return OWNER && (num === OWNER || num.endsWith(OWNER.slice(-10)));
 }
 
-async function handleCommand(cmd, args, from, msg, isAdmin) {
+// Multi-session: har session ka apna sock. handleCommand ko sock parameter milta hai.
+async function handleCommand(sock, cmd, args, from, msg, isAdmin) {
     switch (cmd) {
         case 'menu': case 'help': return menuCmds.menuCmd(sock, from, msg);
         case 'ping': return menuCmds.pingCmd(sock, from, msg);
@@ -146,7 +146,7 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, admin);
         case 'gs': case 'groupstatus': return gsCmds.gsCmd(sock, from, msg, args, admin);
         case 'wordreact': return wordreactCmds.wordreactCmd(sock, from, msg, args, admin);
-        case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
+        case 'autostatus': case 'status': return autostatusCmds.autostatusCmd(sock, from, msg, args);
         case 'autoreact': return autoreactCmds.autoreactCmd(sock, from, msg, args, isAdmin);
         case 'setsource': return mirrorCmds.setsourceCmd(sock, from, msg, args);
         case 'mirror': return mirrorCmds.mirrorCmd(sock, from, msg, args);
@@ -161,7 +161,9 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
     }
 }
 
-async function onMessage(m) {
+// Multi-session: har session ka apna onMessage handler (apne sock ke saath)
+function makeOnMessage(sock) {
+    return async function onMessage(m) {
     try {
         const msg = m.messages?.[0];
         if (!msg?.message) return;
@@ -227,7 +229,7 @@ async function onMessage(m) {
                 await sock.sendMessage(from, { text: '❌ Owner only.' }, { quoted: msg });
                 return;
             }
-            const handled = await handleCommand(cmd, args, from, msg, admin);
+            const handled = await handleCommand(sock, cmd, args, from, msg, admin);
             if (handled === null && admin) {
                 await sock.sendMessage(from, { text: '❌ Unknown command. Send .menu' }, { quoted: msg });
             }
@@ -247,57 +249,67 @@ async function onMessage(m) {
     } catch (e) {
         console.error('[onMessage]', e.message);
     }
-}
+    }; // end onMessage
+} // end makeOnMessage
 
 // Ban protection: exponential backoff + session parking (production bot wala proven pattern)
-let consecutiveFailures = 0;
-let sessionParked = false;
 const MAX_FAILURES = 5;
 
 /**
  * Pairing page se call hota hai: parked/dead session ko unpark karke
  * fresh socket start karo taake pairing code/QR kaam kare.
  */
-async function requestSocketRestart() {
-    sessionParked = false;
-    consecutiveFailures = 0;
-    console.log('[pair] Socket restart requested — unparking session.');
+async function requestSocketRestart(sessionId) {
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    session.parked = false;
+    session.consecutiveFailures = 0;
+    console.log(`[pair] Socket restart requested for ${sessionId} — unparking session.`);
     // Purana socket band karo (agar khula hai)
-    try { sock?.ws?.close(); } catch {}
-    await start();
+    try { session.sock?.ws?.close(); } catch {}
+    await startSession(sessionId);
 }
 
-async function start() {
+async function startSession(sessionId) {
+    const session = sessions.create(sessionId);
     await db.init();
     if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
     // DATABASE_URL ho to session DB mein (redeploy-proof), warna files
+    // Har session ka alag user_id: mini-bot-<sessionId>
     const { getAuthState } = require('./lib/dbAuthState');
-    const { state, saveCreds } = await getAuthState('mini-bot', AUTH_DIR);
+    const { state, saveCreds } = await getAuthState(`mini-bot-${sessionId}`, AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
 
-    sock = makeWASocket({
+    const sock = makeWASocket({
         version,
         auth: state,
         printQRInTerminal: false,
         browser: ['SchedulerBot', 'Chrome', '1.0'],
     });
+    sessions.setSock(sessionId, sock);
     sock.ev.on('creds.update', saveCreds);
     branding.wrapSocket(sock); // GLOBAL BRANDING: har outgoing message auto-branded
 
     sock.ev.on('connection.update', (u) => {
         const { connection, lastDisconnect, qr } = u;
-        if (connection) lastConnState = connection;
-        if (qr) { console.log('Scan QR to pair:'); qrcode.generate(qr, { small: true }); setLatestQR(qr); }
+        if (connection) sessions.setConnState(sessionId, connection);
+        if (qr) {
+            console.log(`[${sessionId}] Scan QR to pair:`);
+            qrcode.generate(qr, { small: true });
+            sessions.setQR(sessionId, qr);
+        }
         if (connection === 'open') {
-            consecutiveFailures = 0; // kamyab connect par counter reset
-            clearQR(); // pair ho gaya — QR ki zaroorat nahi
-            console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
-            // Welcome message — nayi pairing par khud ko bhejo (sirf ek dafa per number)
+            session.consecutiveFailures = 0; // kamyab connect par counter reset
+            sessions.setQR(sessionId, null); // pair ho gaya — QR ki zaroorat nahi
+            const myJid = jidNormalizedUser(sock.user.id);
+            sessions.setPaired(sessionId, true, myJid);
+            console.log(`[${sessionId}] ✅ Connected as`, myJid);
+            // Welcome message — nayi pairing par khud ko bhejo (sirf ek dafa per session)
             // Image + caption ek hi message mein (menu jaisa style)
             (async () => {
                 try {
-                    const myJid = jidNormalizedUser(sock.user.id);
-                    const lastWelcome = await db.getSetting('welcome_sent_for');
+                    const welcomeKey = `welcome_sent_for_${sessionId}`;
+                    const lastWelcome = await db.getSetting(welcomeKey);
                     if (lastWelcome !== myJid) {
                         const welcomeCaption =
                             `🎉 *BABA SAB JANTA HAI* mein khush amdeed!\n\n` +
@@ -317,8 +329,8 @@ async function start() {
                             // Image na mile to sirf text bhejo
                             await sock.sendMessage(myJid, { text: welcomeCaption });
                         }
-                        await db.setSetting('welcome_sent_for', myJid);
-                        console.log('[welcome] Welcome message (image+caption) bheja gaya ✅');
+                        await db.setSetting(welcomeKey, myJid);
+                        console.log(`[welcome] Welcome message (image+caption) bheja gaya ✅`);
                     }
                 } catch (e) {
                     console.error('[welcome] Failed:', e.message);
@@ -347,32 +359,33 @@ async function start() {
         }
         if (connection === 'close') {
             const code = lastDisconnect?.error?.output?.statusCode;
-            console.log('Connection closed:', code);
+            console.log(`[${sessionId}] Connection closed:`, code);
+            sessions.setPaired(sessionId, false);
             // 401 (loggedOut) ya 403 (banned/forbidden) par foran park — retry = ban harden
             if (code === DisconnectReason.loggedOut || code === 403 || code === DisconnectReason.forbidden) {
-                sessionParked = true;
-                console.log('🛑 Session parked (auth refused/banned). Auto-retry BAND. Dobara pair karo.');
+                session.parked = true;
+                console.log(`[${sessionId}] 🛑 Session parked (auth refused/banned). Auto-retry BAND. Dobara pair karo.`);
                 return;
             }
-            if (sessionParked) {
-                console.log('🛑 Session parked hai — auto-retry nahi hoga.');
+            if (session.parked) {
+                console.log(`[${sessionId}] 🛑 Session parked hai — auto-retry nahi hoga.`);
                 return;
             }
             // Exponential backoff: 5s -> 10s -> 20s -> 40s -> 60s (cap)
             // 5 consecutive failures par park
-            if (consecutiveFailures >= MAX_FAILURES) {
-                sessionParked = true;
-                console.log('🛑 5 lagatar failures — session parked (number bachane ke liye). Dobara pair karo.');
+            if (session.consecutiveFailures >= MAX_FAILURES) {
+                session.parked = true;
+                console.log(`[${sessionId}] 🛑 5 lagatar failures — session parked (number bachane ke liye). Dobara pair karo.`);
                 return;
             }
-            const delayMs = Math.min(5000 * Math.pow(2, consecutiveFailures), 60000);
-            consecutiveFailures++;
-            console.log(`Reconnecting in ${Math.round(delayMs / 1000)}s (failure ${consecutiveFailures}/${MAX_FAILURES})...`);
-            setTimeout(start, delayMs);
+            const delayMs = Math.min(5000 * Math.pow(2, session.consecutiveFailures), 60000);
+            session.consecutiveFailures++;
+            console.log(`[${sessionId}] Reconnecting in ${Math.round(delayMs / 1000)}s (failure ${session.consecutiveFailures}/${MAX_FAILURES})...`);
+            setTimeout(() => startSession(sessionId), delayMs);
         }
     });
 
-    sock.ev.on('messages.upsert', onMessage);
+    sock.ev.on('messages.upsert', makeOnMessage(sock));
 
     // Naye group members → autogreet
     sock.ev.on('group-participants.update', async (u) => {
@@ -387,8 +400,34 @@ async function start() {
 process.on('uncaughtException', e => console.error('[fatal]', e.message));
 process.on('unhandledRejection', e => console.error('[unhandled]', e?.message || e));
 
-// Pairing-code web page (Railway PORT par) — QR ka easy alternative
-const { startPairServer, setLatestQR, clearQR } = require('./lib/pairserver');
-startPairServer(() => sock, requestSocketRestart, () => lastConnState);
+// Pairing web page (Railway PORT par) — multi-session: har banda apna QR/pairing code
+const { startPairServer } = require('./lib/pairserver');
+global.startMiniSession = startSession; // pairserver se naya session start karne ke liye
+startPairServer(sessions, requestSocketRestart);
 
-start();
+// Boot: DB se purane sessions load karke start karo + default session
+(async () => {
+    await db.init();
+    const existingIds = await sessions.loadFromDB();
+    // Purana single-session format ('mini-bot') ko migrate karo
+    try {
+        const url = process.env.DATABASE_URL;
+        if (url) {
+            const { Pool } = require('pg');
+            const pool = new Pool({ connectionString: url, ssl: { rejectUnauthorized: false }, max: 1 });
+            const r = await pool.query("SELECT 1 FROM wa_sessions WHERE user_id = 'mini-bot'");
+            if (r.rows.length && !existingIds.includes('default')) {
+                await pool.query("UPDATE wa_sessions SET user_id = 'mini-bot-default' WHERE user_id = 'mini-bot'");
+                console.log('[boot] Migrated mini-bot → mini-bot-default');
+                existingIds.push('default');
+            }
+            await pool.end();
+        }
+    } catch (e) {
+        console.error('[boot] Migration failed:', e.message);
+    }
+    if (!existingIds.length) existingIds.push('default');
+    for (const sid of existingIds) {
+        startSession(sid).catch(e => console.error(`[boot] Session ${sid} failed:`, e.message));
+    }
+})();
