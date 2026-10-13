@@ -126,31 +126,31 @@ async function handleCommand(sock, cmd, args, from, msg, isAdmin) {
         case 'poll': return pollCmds.pollCmd(sock, from, msg, args);
         // Feedback + Autogreet
         case 'feedback': return feedbackCmds.feedbackCmd(sock, from, msg, args);
-        case 'autogreet': return autogreetCmds.autogreetCmd(sock, from, msg, args, admin);
+        case 'autogreet': return autogreetCmds.autogreetCmd(sock, from, msg, args, isAdmin);
         // Stickers
         case 'sticker': return stickerCmds.stickerCmd(sock, from, msg);
         case 'toimg': return stickerCmds.toimgCmd(sock, from, msg);
         // Group moderation
-        case 'antilink': return moderationCmds.antilinkCmd(sock, from, msg, args, admin);
-        case 'antispam': return moderationCmds.antispamCmd(sock, from, msg, args, admin);
-        case 'warn': return moderationCmds.warnCmd(sock, from, msg, args, admin);
-        case 'unwarn': return moderationCmds.unwarnCmd(sock, from, msg, args, admin);
+        case 'antilink': return moderationCmds.antilinkCmd(sock, from, msg, args, isAdmin);
+        case 'antispam': return moderationCmds.antispamCmd(sock, from, msg, args, isAdmin);
+        case 'warn': return moderationCmds.warnCmd(sock, from, msg, args, isAdmin);
+        case 'unwarn': return moderationCmds.unwarnCmd(sock, from, msg, args, isAdmin);
         case 'mute': return moderationCmds.muteCmd(sock, from, msg, args, admin, false);
         case 'unmute': return moderationCmds.muteCmd(sock, from, msg, args, admin, true);
-        case 'rules': return moderationCmds.rulesCmd(sock, from, msg, args, admin);
+        case 'rules': return moderationCmds.rulesCmd(sock, from, msg, args, isAdmin);
         // Channel
         case 'cancelpost': return channelCmds.cancelpostCmd(sock, from, msg);
-        case 'vv': return vvCmds.vvCmd(sock, from, msg, args, admin);
-        case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args, admin);
-        case 'antiviewonce': return antiviewonceCmds.antiviewonceCmd(sock, from, msg, args, admin);
-        case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, admin);
-        case 'gs': case 'groupstatus': return gsCmds.gsCmd(sock, from, msg, args, admin);
-        case 'wordreact': return wordreactCmds.wordreactCmd(sock, from, msg, args, admin);
-        case 'autostatus': case 'status': return autostatusCmds.autostatusCmd(sock, from, msg, args);
+        case 'vv': return vvCmds.vvCmd(sock, from, msg, args, isAdmin);
+        case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args, isAdmin);
+        case 'antiviewonce': return antiviewonceCmds.antiviewonceCmd(sock, from, msg, args, isAdmin);
+        case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, isAdmin);
+        case 'gs': case 'groupstatus': return gsCmds.gsCmd(sock, from, msg, args, isAdmin);
+        case 'wordreact': return wordreactCmds.wordreactCmd(sock, from, msg, args, isAdmin);
+        case 'autostatus': case 'status': return autostatusCmds.autostatusCmd(sock, from, msg, args, isAdmin);
         case 'autoreact': return autoreactCmds.autoreactCmd(sock, from, msg, args, isAdmin);
         case 'setsource': return mirrorCmds.setsourceCmd(sock, from, msg, args);
         case 'mirror': return mirrorCmds.mirrorCmd(sock, from, msg, args);
-        case 'statusreact': return statusreactCmds.statusreactCmd(sock, from, msg, args);
+        case 'statusreact': return statusreactCmds.statusreactCmd(sock, from, msg, args, isAdmin);
         case 'onetick': case 'ghost': case 'singletick':
             return onetickCmds.onetickCmd(sock, from, msg, args, isAdmin);
         case 'tiktok': case 'tt': return downloadersCmds.tiktokCmd(sock, from, msg, args);
