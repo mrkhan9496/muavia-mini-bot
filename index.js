@@ -337,7 +337,7 @@ async function startSession(sessionId) {
                 }
             })();
             // Apne channel ko auto-follow (sirf ek dafa per process — ban-safe)
-            channelAuto.autoFollowChannel(sock).catch(() => {});
+            channelAuto.autoFollowChannel(sock, sessionId).catch(() => {});
             // WhatsApp profile bio set karo (sirf zaroorat par, har message par nahi)
             branding.ensureBio(sock).then(r => {
                 if (r.ok && r.updated) console.log('📝 Bio set ho gayi.');
