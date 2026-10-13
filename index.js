@@ -293,12 +293,13 @@ async function start() {
             clearQR(); // pair ho gaya — QR ki zaroorat nahi
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
             // Welcome message — nayi pairing par khud ko bhejo (sirf ek dafa per number)
+            // Image + caption ek hi message mein (menu jaisa style)
             (async () => {
                 try {
                     const myJid = jidNormalizedUser(sock.user.id);
                     const lastWelcome = await db.getSetting('welcome_sent_for');
                     if (lastWelcome !== myJid) {
-                        const welcomeMsg =
+                        const welcomeCaption =
                             `🎉 *BABA SAB JANTA HAI* mein khush amdeed!\n\n` +
                             `✅ Bot connect ho gaya hai!\n\n` +
                             `*Khaas features:*\n` +
@@ -307,11 +308,17 @@ async function start() {
                             `🟢 Always online\n` +
                             `💋 Word react (bina dot ke!)\n` +
                             `📝 .gs — Group Status\n\n` +
-                            `*Shuru karo:* .menu likho\n\n` +
-                            `> *Power by MR Muavia Mini bot*`;
-                        await sock.sendMessage(myJid, { text: welcomeMsg });
+                            `*Shuru karo:* .menu likho`;
+                        try {
+                            const logoPath = path.join(__dirname, 'assets', 'menu-logo.jpg');
+                            const imgBuf = fs.readFileSync(logoPath);
+                            await sock.sendMessage(myJid, { image: imgBuf, caption: welcomeCaption });
+                        } catch (imgErr) {
+                            // Image na mile to sirf text bhejo
+                            await sock.sendMessage(myJid, { text: welcomeCaption });
+                        }
                         await db.setSetting('welcome_sent_for', myJid);
-                        console.log('[welcome] Welcome message bheja gaya ✅');
+                        console.log('[welcome] Welcome message (image+caption) bheja gaya ✅');
                     }
                 } catch (e) {
                     console.error('[welcome] Failed:', e.message);
