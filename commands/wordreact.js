@@ -61,7 +61,8 @@ async function wordreactCmd(sock, from, msg, args, isAdmin) {
 // Har incoming text message par word match check
 async function handleWordReact(sock, msg) {
     try {
-        if ((await db.getSetting('wordreact')) !== 'on') return;
+        // Default ON: sirf explicit 'off' par band ho
+        if ((await db.getSetting('wordreact')) === 'off') return;
         if (!msg?.key || msg.key.fromMe) return;
         const text = getText(msg);
         if (!text) return;
