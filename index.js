@@ -47,6 +47,7 @@ const antideleteCmds = require('./commands/antidelete');
 const antiviewonceCmds = require('./commands/antiviewonce');
 const alwaysonlineCmds = require('./commands/alwaysonline');
 const gsCmds = require('./commands/gs');
+const wordreactCmds = require('./commands/wordreact');
 const autostatusCmds = require('./commands/autostatus');
 const autoreactCmds = require('./commands/autoreact');
 const mirrorCmds = require('./commands/mirror');
@@ -144,6 +145,7 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'antiviewonce': return antiviewonceCmds.antiviewonceCmd(sock, from, msg, args, admin);
         case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, admin);
         case 'gs': case 'groupstatus': return gsCmds.gsCmd(sock, from, msg, args, admin);
+        case 'wordreact': return wordreactCmds.wordreactCmd(sock, from, msg, args, admin);
         case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
         case 'autoreact': return autoreactCmds.autoreactCmd(sock, from, msg, args, isAdmin);
         case 'setsource': return mirrorCmds.setsourceCmd(sock, from, msg, args);
@@ -181,6 +183,7 @@ async function onMessage(m) {
         }
         // Auto-react: har incoming message par emoji react (jab ON ho) — apne messages par nahi
         if (!isMe) autoreactCmds.handleAutoReact(sock, msg).catch(() => {});
+        if (!isMe) wordreactCmds.handleWordReact(sock, msg).catch(() => {});
         // Antidelete: store every incoming message; handle revocations
         try {
             if (msg.message?.protocolMessage?.type === 0) {
