@@ -2,7 +2,7 @@
  * .vv — View-once bypass.
  * Reply to a view-once image/video/audio message with .vv
  * and the bot will send the media back so you can see it again.
- * Owner only.
+ * Public — koi bhi use kar sakta hai.
  */
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
@@ -13,7 +13,7 @@ async function collectBuffer(stream) {
 }
 
 async function vvCmd(sock, from, msg, args, isAdmin) {
-    if (!isAdmin) return sock.sendMessage(from, { text: '❌ Owner only.' }, { quoted: msg });
+    // Public command — koi bhi use kar sakta hai (owner check hata diya)
 
     for (const emoji of ['⏳', '🔓', '👁️']) {
         try { await sock.sendMessage(from, { react: { text: emoji, key: msg.key } }); } catch (e) {}
