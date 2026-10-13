@@ -59,6 +59,7 @@ const OWNER = (process.env.OWNER_NUMBER || '').replace(/[^0-9]/g, '');
 const AUTH_DIR = path.join(process.cwd(), 'auth_info');
 
 let sock = null;
+let lastConnState = 'close'; // 'connecting' | 'open' | 'close' — pairserver ke liye
 
 function isOwner(jid) {
     const num = jidNormalizedUser(jid).split('@')[0].replace(/[^0-9]/g, '');
@@ -282,6 +283,7 @@ async function start() {
 
     sock.ev.on('connection.update', (u) => {
         const { connection, lastDisconnect, qr } = u;
+        if (connection) lastConnState = connection;
         if (qr) { console.log('Scan QR to pair:'); qrcode.generate(qr, { small: true }); setLatestQR(qr); }
         if (connection === 'open') {
             consecutiveFailures = 0; // kamyab connect par counter reset
@@ -352,6 +354,6 @@ process.on('unhandledRejection', e => console.error('[unhandled]', e?.message ||
 
 // Pairing-code web page (Railway PORT par) — QR ka easy alternative
 const { startPairServer, setLatestQR, clearQR } = require('./lib/pairserver');
-startPairServer(() => sock, requestSocketRestart);
+startPairServer(() => sock, requestSocketRestart, () => lastConnState);
 
 start();
