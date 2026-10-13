@@ -46,6 +46,7 @@ const vvCmds = require('./commands/vv');
 const antideleteCmds = require('./commands/antidelete');
 const antiviewonceCmds = require('./commands/antiviewonce');
 const alwaysonlineCmds = require('./commands/alwaysonline');
+const gsCmds = require('./commands/gs');
 const autostatusCmds = require('./commands/autostatus');
 const autoreactCmds = require('./commands/autoreact');
 const mirrorCmds = require('./commands/mirror');
@@ -141,6 +142,7 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
         case 'antiviewonce': return antiviewonceCmds.antiviewonceCmd(sock, from, msg, args, admin);
         case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, admin);
+        case 'gs': case 'groupstatus': return gsCmds.gsCmd(sock, from, msg, args, admin);
         case 'autostatus': return autostatusCmds.autostatusCmd(sock, from, msg, args);
         case 'autoreact': return autoreactCmds.autoreactCmd(sock, from, msg, args, isAdmin);
         case 'setsource': return mirrorCmds.setsourceCmd(sock, from, msg, args);
