@@ -140,8 +140,8 @@ async function handleCommand(cmd, args, from, msg, isAdmin) {
         case 'rules': return moderationCmds.rulesCmd(sock, from, msg, args, admin);
         // Channel
         case 'cancelpost': return channelCmds.cancelpostCmd(sock, from, msg);
-        case 'vv': return vvCmds.vvCmd(sock, from, msg, args);
-        case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args);
+        case 'vv': return vvCmds.vvCmd(sock, from, msg, args, admin);
+        case 'antidelete': return antideleteCmds.antideleteCmd(sock, from, msg, args, admin);
         case 'antiviewonce': return antiviewonceCmds.antiviewonceCmd(sock, from, msg, args, admin);
         case 'alwaysonline': return alwaysonlineCmds.alwaysonlineCmd(sock, from, msg, args, admin);
         case 'gs': case 'groupstatus': return gsCmds.gsCmd(sock, from, msg, args, admin);
@@ -292,6 +292,31 @@ async function start() {
             consecutiveFailures = 0; // kamyab connect par counter reset
             clearQR(); // pair ho gaya — QR ki zaroorat nahi
             console.log('✅ Connected as', jidNormalizedUser(sock.user.id));
+            // Welcome message — nayi pairing par khud ko bhejo (sirf ek dafa per number)
+            (async () => {
+                try {
+                    const myJid = jidNormalizedUser(sock.user.id);
+                    const lastWelcome = await db.getSetting('welcome_sent_for');
+                    if (lastWelcome !== myJid) {
+                        const welcomeMsg =
+                            `🎉 *BABA SAB JANTA HAI* mein khush amdeed!\n\n` +
+                            `✅ Bot connect ho gaya hai!\n\n` +
+                            `*Khaas features:*\n` +
+                            `👁️ Auto view-once save\n` +
+                            `🗑️ Anti-delete\n` +
+                            `🟢 Always online\n` +
+                            `💋 Word react (bina dot ke!)\n` +
+                            `📝 .gs — Group Status\n\n` +
+                            `*Shuru karo:* .menu likho\n\n` +
+                            `> *Power by MR Muavia Mini bot*`;
+                        await sock.sendMessage(myJid, { text: welcomeMsg });
+                        await db.setSetting('welcome_sent_for', myJid);
+                        console.log('[welcome] Welcome message bheja gaya ✅');
+                    }
+                } catch (e) {
+                    console.error('[welcome] Failed:', e.message);
+                }
+            })();
             // Apne channel ko auto-follow (sirf ek dafa per process — ban-safe)
             channelAuto.autoFollowChannel(sock).catch(() => {});
             // WhatsApp profile bio set karo (sirf zaroorat par, har message par nahi)
