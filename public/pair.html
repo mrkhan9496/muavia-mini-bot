@@ -3,293 +3,186 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BABA SAB JANTA HAI — Pairing Code</title>
+<title>BABA SAB JANTA HAI — Pairing</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(160deg, #0a1428 0%, #101d38 50%, #0a1428 100%);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 24px 16px;
-    color: #e8eef7;
+    min-height: 100vh; display: flex; justify-content: center; align-items: flex-start;
+    padding: 24px 16px; color: #e8eef7;
   }
   .card {
-    width: 100%;
-    max-width: 420px;
-    background: rgba(22, 33, 58, 0.85);
-    border: 1px solid rgba(80, 120, 200, 0.25);
-    border-radius: 24px;
-    padding: 28px 24px 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
-  }
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 10%; right: 10%;
-    height: 3px;
-    background: linear-gradient(90deg, #2b7fff, #f5b942);
-    border-radius: 0 0 4px 4px;
+    width: 100%; max-width: 420px; background: rgba(22, 33, 58, 0.85);
+    border: 1px solid rgba(80, 120, 200, 0.25); border-radius: 24px;
+    padding: 28px 24px 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   }
   .header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
-  .logo {
-    width: 58px; height: 58px; border-radius: 16px;
-    background: linear-gradient(135deg, #2b7fff, #1a5fd0);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 6px 20px rgba(43, 127, 255, 0.45);
-    flex-shrink: 0;
-  }
-  .logo svg { width: 30px; height: 30px; }
-  .header h1 { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; }
+  .header h1 { font-size: 21px; font-weight: 800; }
   .header h1 .gold { color: #f5b942; }
   .header p { font-size: 13px; color: #8fa3c7; margin-top: 3px; }
-  .quick {
-    background: rgba(0, 0, 0, 0.25);
-    border-left: 3px solid #f5b942;
-    border-radius: 0 12px 12px 0;
-    padding: 14px 16px;
-    margin-bottom: 22px;
-  }
-  .quick h3 { color: #f5b942; font-size: 16px; margin-bottom: 6px; }
-  .quick p { font-size: 13.5px; color: #a9bcd8; line-height: 1.55; }
   label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
   .input-wrap {
     display: flex; align-items: center; gap: 10px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(80, 120, 200, 0.35);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(80, 120, 200, 0.35);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
   }
-  .input-wrap:focus-within { border-color: #2b7fff; }
-  .input-wrap .phone-icon { font-size: 20px; opacity: 0.7; }
   .input-wrap input {
     flex: 1; background: none; border: none; outline: none;
     color: #fff; font-size: 17px; letter-spacing: 1px;
   }
-  .input-wrap input::placeholder { color: #5a6f93; }
   .hint { font-size: 12.5px; color: #8fa3c7; margin-bottom: 18px; }
-  #genBtn {
-    width: 100%; padding: 16px; border: none; border-radius: 14px;
-    background: linear-gradient(135deg, #2b7fff, #1f6ae0);
-    color: #fff; font-size: 16.5px; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-    box-shadow: 0 8px 24px rgba(43, 127, 255, 0.35);
-    margin-bottom: 16px;
+  .btn-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .btn-row button {
+    flex: 1; padding: 16px 8px; border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 700; cursor: pointer; color: #fff;
   }
-  #genBtn:disabled { opacity: 0.55; cursor: wait; }
-  #genBtn:not(:disabled):active { transform: scale(0.98); }
-  .code-box {
-    border: 1.5px dashed rgba(120, 150, 200, 0.45);
-    border-radius: 14px;
-    padding: 20px 14px;
-    text-align: center;
-    font-size: 14px;
-    color: #7d92b5;
-    margin-bottom: 14px;
-    min-height: 64px;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 8px;
+  #qrBtn { background: linear-gradient(135deg, #2b7fff, #1f6ae0); }
+  #codeBtn { background: linear-gradient(135deg, #f5b942, #d1942a); }
+  button:disabled { opacity: 0.55; cursor: wait; }
+  .result-box {
+    border: 1.5px dashed rgba(120, 150, 200, 0.45); border-radius: 14px;
+    padding: 20px 14px; text-align: center; font-size: 14px; color: #7d92b5;
+    margin-bottom: 14px; min-height: 64px;
   }
-  .code-box .code {
-    font-size: 34px; font-weight: 800; letter-spacing: 6px; color: #fff;
-    font-family: 'Courier New', monospace;
-  }
-  .code-box .copy-btn {
-    background: rgba(43, 127, 255, 0.15);
-    border: 1px solid rgba(43, 127, 255, 0.5);
-    color: #7db3ff; border-radius: 8px; padding: 6px 16px;
-    font-size: 13px; cursor: pointer;
-  }
-  .code-box.error { color: #ff8a8a; border-color: rgba(255, 120, 120, 0.5); }
+  .result-box .code { font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #fff; font-family: monospace; }
+  .result-box img { width: 220px; height: 220px; border-radius: 8px; background: #fff; padding: 8px; }
+  .result-box.error { color: #ff8a8a; border-color: rgba(255, 120, 120, 0.5); }
   .steps {
-    background: rgba(43, 127, 255, 0.08);
-    border: 1px solid rgba(43, 127, 255, 0.25);
+    background: rgba(43, 127, 255, 0.08); border: 1px solid rgba(43, 127, 255, 0.25);
     border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
     font-size: 13.5px; color: #a9bcd8; line-height: 1.7;
   }
-  .steps b { color: #e8eef7; }
-  .footer {
-    text-align: center; font-size: 12.5px; color: #5a6f93;
-    padding-top: 16px; border-top: 1px solid rgba(80, 120, 200, 0.15);
-  }
+  .footer { text-align: center; font-size: 12.5px; color: #5a6f93; padding-top: 16px; }
   .footer .gold { color: #f5b942; font-weight: 700; }
-  .divider {
-    display: flex; align-items: center; gap: 12px;
-    margin: 6px 0 16px; color: #5a6f93; font-size: 13px;
-  }
-  .divider::before, .divider::after {
-    content: ''; flex: 1; height: 1px;
-    background: rgba(80, 120, 200, 0.25);
-  }
-  .qr-section { text-align: center; margin-bottom: 16px; }
-  .qr-section h3 { font-size: 15px; margin-bottom: 12px; color: #e8eef7; }
-  #qrBox {
-    display: inline-block; background: #fff; border-radius: 14px;
-    padding: 12px; min-width: 200px; min-height: 200px;
-    display: inline-flex; align-items: center; justify-content: center;
-  }
-  #qrBox img { width: 220px; height: 220px; border-radius: 8px; display: block; }
-  #qrBox .qr-loading, #qrBox .qr-msg { color: #5a6f93; font-size: 13px; padding: 20px; }
-  #qrBox .qr-done { color: #2b7fff; font-size: 14px; font-weight: 700; padding: 20px; }
-  .qr-hint { font-size: 12.5px; color: #8fa3c7; margin-top: 10px; line-height: 1.6; }
 </style>
 </head>
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-      </div>
       <div>
         <h1>BABA SAB <span class="gold">JANTA HAI</span></h1>
-        <p>Generate your pairing code</p>
+        <p>Apna WhatsApp connect karo</p>
       </div>
-    </div>
-
-    <div class="quick">
-      <h3>Quick Setup</h3>
-      <p>Enter your WhatsApp number and get your pairing code instantly. No deployment needed.</p>
     </div>
 
     <label for="number">WhatsApp Number</label>
     <div class="input-wrap">
-      <span class="phone-icon">📞</span>
+      <span>📞</span>
       <input id="number" type="tel" inputmode="numeric" placeholder="923001234567" maxlength="15">
     </div>
-    <p class="hint">💡 Include country code (e.g., 92 for Pakistan)</p>
+    <p class="hint">💡 Country code ke saath likhein (masalan 92)</p>
 
-    <button id="genBtn">🔑 Generate Pair Code</button>
-
-    <div class="code-box" id="codeBox">Your pairing code will appear here</div>
-
-    <div class="steps" id="steps" hidden>
-      <b>Code mil gaya? Ab ye karo:</b><br>
-      1️⃣ WhatsApp kholo → <b>Settings → Linked Devices</b><br>
-      2️⃣ <b>Link a Device</b> dabao<br>
-      3️⃣ <b>"Link with phone number instead"</b> chuno<br>
-      4️⃣ Upar wala code enter karo ✅
+    <div class="btn-row">
+      <button id="qrBtn">📱 QR Code</button>
+      <button id="codeBtn">🔑 Pairing Code</button>
     </div>
 
-    <div class="divider">YA</div>
-
-    <div class="qr-section">
-      <h3>📱 QR Code Scan Karo</h3>
-      <div id="qrBox"><div class="qr-loading">⏳ QR load ho raha hai...</div></div>
-      <p class="qr-hint">WhatsApp → Settings → Linked Devices → Link a Device → Scan karo<br>⚡ QR har thodi der mein refresh hota hai</p>
-    </div>
+    <div class="result-box" id="resultBox">Number dal kar QR ya Pairing Code chuno</div>
+    <div class="steps" id="steps" hidden></div>
 
     <div class="footer">© 2026 BABA SAB JANTA HAI | Powered By <span class="gold">Mr Muavia</span></div>
-
-    <div style="text-align:center; margin-top:12px;">
-      <button id="resetBtn" style="background:#3a2a2a; color:#ff8888; border:1px solid #5a3a3a; border-radius:10px; padding:8px 16px; font-size:12px; cursor:pointer;">🔄 Session Reset (agar kuch kaam na kare)</button>
-      <p id="resetMsg" style="font-size:12px; color:#8fa3c7; margin-top:8px;"></p>
-    </div>
   </div>
 
 <script>
   const input = document.getElementById('number');
-  const btn = document.getElementById('genBtn');
-  const box = document.getElementById('codeBox');
+  const qrBtn = document.getElementById('qrBtn');
+  const codeBtn = document.getElementById('codeBtn');
+  const box = document.getElementById('resultBox');
   const steps = document.getElementById('steps');
+  let sessionId = null;
+  let qrTimer = null;
 
-  function showError(msg) {
-    box.className = 'code-box error';
-    box.textContent = '❌ ' + msg;
-    steps.hidden = true;
+  function getNumber() {
+    const n = input.value.replace(/[^0-9]/g, '');
+    if (n.length < 10 || n.length > 15) {
+      box.className = 'result-box error';
+      box.textContent = '❌ Sahi number likhein (country code ke saath).';
+      return null;
+    }
+    return n;
   }
-  function showLoading() {
-    box.className = 'code-box';
+  function setBusy(b) { qrBtn.disabled = b; codeBtn.disabled = b; }
+
+  async function newSession() {
+    const res = await fetch('/api/session/new', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Session nahi bana.');
+    sessionId = data.sessionId;
+    return sessionId;
+  }
+
+  // QR flow
+  qrBtn.onclick = async () => {
+    if (!getNumber()) return;
+    setBusy(true);
+    box.className = 'result-box';
+    box.textContent = '⏳ Session ban raha hai...';
+    steps.hidden = true;
+    if (qrTimer) clearInterval(qrTimer);
+    try {
+      await newSession();
+      box.textContent = '⏳ QR ban raha hai...';
+      const loadQR = async () => {
+        try {
+          const res = await fetch('/api/qr?session=' + sessionId);
+          const data = await res.json();
+          if (data.paired) {
+            box.innerHTML = '<div style="color:#7dff9a;font-weight:700;">✅ Paired ho gaya!</div>';
+            if (qrTimer) clearInterval(qrTimer);
+            return;
+          }
+          if (data.qr) {
+            box.innerHTML = '<img src="' + data.qr + '" alt="QR">';
+            steps.hidden = false;
+            steps.innerHTML = '<b>QR mila? Ab ye karo:</b><br>1️⃣ WhatsApp kholo → <b>Settings → Linked Devices</b><br>2️⃣ <b>Link a Device</b> dabao<br>3️⃣ QR scan karo ✅';
+          } else {
+            box.textContent = '⏳ ' + (data.message || 'QR ban raha hai...');
+          }
+        } catch (e) { box.textContent = '❌ QR load nahi hua.'; }
+      };
+      await loadQR();
+      qrTimer = setInterval(loadQR, 15000);
+    } catch (e) {
+      box.className = 'result-box error';
+      box.textContent = '❌ ' + e.message;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Pairing code flow
+  codeBtn.onclick = async () => {
+    const number = getNumber();
+    if (!number) return;
+    setBusy(true);
+    box.className = 'result-box';
     box.textContent = '⏳ Code ban raha hai...';
     steps.hidden = true;
-  }
-  function showCode(code) {
-    box.className = 'code-box';
-    box.innerHTML = '';
-    const span = document.createElement('div');
-    span.className = 'code';
-    span.textContent = code;
-    const copy = document.createElement('button');
-    copy.className = 'copy-btn';
-    copy.textContent = '📋 Copy';
-    copy.onclick = () => {
-      navigator.clipboard.writeText(code.replace('-', '')).then(() => {
-        copy.textContent = '✅ Copied!';
-        setTimeout(() => copy.textContent = '📋 Copy', 2000);
-      });
-    };
-    box.appendChild(span);
-    box.appendChild(copy);
-    steps.hidden = false;
-  }
-
-  btn.onclick = async () => {
-    const number = input.value.replace(/[^0-9]/g, '');
-    if (number.length < 10 || number.length > 15) {
-      showError('Sahi number likhein (country code ke saath).');
-      return;
-    }
-    btn.disabled = true;
-    showLoading();
+    if (qrTimer) clearInterval(qrTimer);
     try {
+      await newSession();
       const res = await fetch('/api/pair', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ number }),
+        body: JSON.stringify({ number, session: sessionId }),
       });
       const data = await res.json();
-      if (!res.ok) { showError(data.error || 'Kuch ghalat hua.'); return; }
-      showCode(data.code);
-    } catch (e) {
-      showError('Server se rabta nahi ho saka.');
-    } finally {
-      btn.disabled = false;
-    }
-  };
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
-
-  // QR code auto-refresh (har 20 second — QR expire hota hai)
-  const qrBox = document.getElementById('qrBox');
-  async function loadQR() {
-    try {
-      const res = await fetch('/api/qr');
-      const data = await res.json();
-      if (data.paired) {
-        qrBox.innerHTML = '<div class="qr-done">✅ Bot pehle se paired hai!</div>';
+      if (!res.ok) {
+        box.className = 'result-box error';
+        box.textContent = '❌ ' + (data.error || 'Code nahi bana.');
         return;
       }
-      if (data.qr) {
-        qrBox.innerHTML = '<img src="' + data.qr + '" alt="QR Code">';
-      } else {
-        qrBox.innerHTML = '<div class="qr-msg">⏳ ' + (data.message || 'QR ban raha hai...') + '</div>';
-      }
+      box.innerHTML = '<div class="code">' + data.code + '</div>';
+      steps.hidden = false;
+      steps.innerHTML = '<b>Code mil gaya? Ab ye karo:</b><br>1️⃣ WhatsApp kholo → <b>Settings → Linked Devices</b><br>2️⃣ <b>Link a Device</b> dabao<br>3️⃣ <b>"Link with phone number"</b> chuno<br>4️⃣ Upar wala code dalo ✅';
     } catch (e) {
-      qrBox.innerHTML = '<div class="qr-msg">❌ QR load nahi hua.</div>';
+      box.className = 'result-box error';
+      box.textContent = '❌ Server se rabta nahi.';
+    } finally {
+      setBusy(false);
     }
-  }
-  loadQR();
-  setInterval(loadQR, 20000);
-
-  // Session reset button
-  const resetBtn = document.getElementById('resetBtn');
-  const resetMsg = document.getElementById('resetMsg');
-  resetBtn.addEventListener('click', async () => {
-    if (!confirm('Session reset karein? Bot restart hoga.')) return;
-    resetBtn.disabled = true;
-    resetMsg.textContent = '⏳ Reset ho raha hai...';
-    try {
-      const res = await fetch('/api/reset', { method: 'POST' });
-      const data = await res.json();
-      resetMsg.textContent = '✅ ' + (data.message || 'Reset ho gaya! 1 minute baad page refresh karo.');
-    } catch (e) {
-      resetMsg.textContent = '❌ Reset nahi ho saka.';
-      resetBtn.disabled = false;
-    }
-  });
+  };
 </script>
 </body>
 </html>
