@@ -50,7 +50,7 @@ async function handleStatusUpdate(sock, m) {
 
         const emojiSetting = await db.getSetting('status_emojis');
         const emojis = emojiSetting ? emojiSetting.split(' ').filter(Boolean) : DEFAULT_EMOJIS;
-        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+        const emoji = emojis[0]; // FIXED: pehla emoji hi use ho (random nahi — user ki demand)
 
         for (const msg of (m.messages || [])) {
             try {
