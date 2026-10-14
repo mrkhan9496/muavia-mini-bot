@@ -236,14 +236,28 @@ function makeOnMessage(sock) {
             return; // commands never trigger chatbot
         }
 
-        // AI chatbot (global on/off, persistent) — apne messages par nahi (loop protection)
-        if (!isMe && (await db.getSetting('chatbot')) === 'on') {
-            if (!chatbotCmds.canReply(from)) return; // rate limit
-            try {
-                const reply = await aiChat.reply(text.slice(0, 500));
-                await sock.sendMessage(from, { text: reply }, { quoted: msg });
-            } catch (e) {
-                console.error('[chatbot] reply failed:', e.message);
+        // AI chatbot (global on/off, persistent)
+        // Loop protection: bot apne khud ke reply ko dobara reply nahi karega.
+        // - !isMe (doosra banda): hamesha reply
+        // - isMe (owner apne phone se): sirf tab reply jab user ne khud type kiya ho,
+        //   bot ke khud ke bheje hue quoted reply ko skip karo
+        const chatbotOn = (await db.getSetting('chatbot')) === 'on';
+        if (chatbotOn) {
+            let skipBotOwnMsg = false;
+            if (isMe && msg.message) {
+                const em = msg.message.extendedTextMessage;
+                if (em && em.contextInfo && em.contextInfo.quotedMessage) {
+                    skipBotOwnMsg = true; // ye bot ka khud ka reply hai — loop se bacho
+                }
+            }
+            if (!skipBotOwnMsg) {
+                if (!chatbotCmds.canReply(from)) return; // rate limit
+                try {
+                    const reply = await aiChat.reply(text.slice(0, 500));
+                    await sock.sendMessage(from, { text: reply }, { quoted: msg });
+                } catch (e) {
+                    console.error('[chatbot] reply failed:', e.message);
+                }
             }
         }
     } catch (e) {
