@@ -51,6 +51,34 @@ async function emmyAio(url) {
     return data.result;
 }
 
+// Fallback APIs — ek fail ho to agli try karo (Muavia ki standing instruction: 4-5 APIs)
+async function cobaltAio(url) {
+    const res = await axios.post('https://cobalt-api.kwiatekmiki.com', {
+        url, videoQuality: '720', filenameStyle: 'basic',
+    }, { timeout: TIMEOUT, headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Content-Type': 'application/json' } });
+    const data = res.data;
+    if (!data || !data.url) throw new Error('Cobalt: koi URL nahi mila');
+    return { title: 'Video', links: [{ url: data.url, type: 'video/mp4', quality: '720' }] };
+}
+
+async function downloadWithFallback(url) {
+    const apis = [
+        { name: 'Emmy', fn: emmyAio },
+        { name: 'Cobalt', fn: cobaltAio },
+    ];
+    let lastErr;
+    for (const api of apis) {
+        try {
+            console.log(`[downloader] Trying ${api.name}...`);
+            return await api.fn(url);
+        } catch (e) {
+            console.log(`[downloader] ${api.name} failed: ${e.message}`);
+            lastErr = e;
+        }
+    }
+    throw lastErr || new Error('Sab APIs fail ho gayin');
+}
+
 function pickBest(links, wantImage = false) {
     if (!Array.isArray(links) || !links.length) throw new Error('Koi media nahi mila');
     const withUrl = links.filter((l) => l.url && !/placeholder|ref=aio_/i.test(l.url));
@@ -68,7 +96,7 @@ function pickBest(links, wantImage = false) {
 
 async function sendDownload(sock, from, msg, url, label) {
     await sock.sendMessage(from, { text: `⏳ *${label} download ho raha hai...*` }, { quoted: msg });
-    const result = await emmyAio(url);
+    const result = await downloadWithFallback(url);
     const best = pickBest(result.links);
     const isImage = /jpg|jpeg|png|webp|image/i.test(best.type || '');
     const caption = `✅ *${result.title || label}*\n\n> *© PERSONAL BOT — MUAVIA*`;
