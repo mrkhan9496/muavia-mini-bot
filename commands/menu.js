@@ -1,57 +1,56 @@
-/** .menu — boxed style (user ki exact requirement), image + text EK message mein */
+/** .menu — Naveed-style boxed menu: header info box + section boxes + ✦ bullets.
+ *  Image + text EK message mein (1024 char caption limit ke andar rehna LAZMI hai). */
 const fs = require('fs');
 const path = require('path');
 const { getChannelContextInfo } = require('../lib/channel');
 const MENU_IMAGE = path.join(__dirname, '..', 'assets', 'menu-logo.jpg');
 
-async function menuCmd(sock, from, msg) {
-    // Boxed menu — 1024 char caption limit ke andar
-    const menuText =
-`╭━━━〔 BABA SAB JANTA HAI 〕━━━╮
-┃ 👑 Owner: Muavia
-┣━━〔 📥 DOWNLOAD MENU 〕━━
-┃ .tiktok .insta .facebook .pinterest
-┃ .movie .moviedl .series .seriesdl .vv
-┣━━〔 🤖 AI MENU 〕━━
-┃ .ai .ask .gemini .chatbot
-┃ .translate .summarize .shayari
-┃ .quote .caption
-┣━━〔 🧰 TOOLS MENU 〕━━
-┃ .qr .poll .sticker .toimg .feedback
-┃ .uptime .apihealth .runtime .ping
-┃ .remind .todo .note .schedule
-┣━━〔 🎉 FUN MENU 〕━━
-┃ .mard .sad .baap
-┣━━〔 ⚙️ UTILITY MENU 〕━━
-┃ .menu .help .autopost .settimes
-┃ .postnow .setchannel .channelstatus
-┃ .antilink .antispam .warn .mute
-┃ .rules .autogreet .autostatus
-┃ .autoreact .antidelete .antiviewonce
-┃ .alwaysonline .onetick .gs
-┃ .mirror .setsource
-┣━━〔 💬 DAILY LIFE 〕━━
-┃ .salam .wsalam .subah .shab
-┃ .sorry .maafi .shukriya .thanks
-┃ .ijazat .respect .adab .dua
-┃ .khairiyat .mashallah .haal .busy
-┃ .ok .dost .mohabbat .takecare
-┃ .bye .allahhafiz
-╰━━━━━━━━━━━━━━━━━━━━╯`;
+// Sections — naya command aaye to yahin add karo, count khud update ho jayegi
+const SECTIONS = [
+    { title: '📥 DOWNLOAD', cmds: ['tiktok', 'insta', 'facebook', 'pinterest', 'movie', 'moviedl', 'series', 'seriesdl', 'vv'] },
+    { title: '🤖 AI', cmds: ['ai', 'ask', 'gemini', 'chatbot', 'translate', 'summarize', 'shayari', 'quote', 'caption'] },
+    { title: '🧰 TOOLS', cmds: ['qr', 'poll', 'sticker', 'toimg', 'feedback', 'uptime', 'apihealth', 'runtime', 'ping', 'remind', 'todo', 'note', 'schedule'] },
+    { title: '🎉 FUN', cmds: ['mard', 'sad', 'baap'] },
+    { title: '⚙️ UTILITY', cmds: ['menu', 'help', 'autopost', 'settimes', 'postnow', 'setchannel', 'channelstatus', 'antilink', 'antispam', 'warn', 'mute', 'rules', 'autogreet', 'autostatus', 'autoreact', 'antidelete', 'antiviewonce', 'alwaysonline', 'onetick', 'gs', 'mirror', 'setsource'] },
+    { title: '💬 DAILY LIFE', cmds: ['salam', 'wsalam', 'subah', 'shab', 'sorry', 'maafi', 'shukriya', 'thanks', 'ijazat', 'respect', 'adab', 'dua', 'khairiyat', 'mashallah', 'haal', 'busy', 'ok', 'dost', 'mohabbat', 'takecare', 'bye', 'allahhafiz'] },
+];
 
-    // Image + menu caption EK HI message mein (user ki requirement)
-    // Caption limit 1024 chars — ye menu uske andar hai
+function buildMenuText() {
+    const total = SECTIONS.reduce((n, s) => n + s.cmds.length, 0);
+    const up = Math.floor(process.uptime());
+    const h = Math.floor(up / 3600), m = Math.floor((up % 3600) / 60);
+    const uptime = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+    let t = `╭━━━〔 🌟 BABA SAB JANTA HAI 🌟 〕━━━╮\n` +
+            `┃ 👑 Muavia  •  Prefix .  •  ${total} cmds\n` +
+            `┃ ⏱️ ${uptime}  •  🛡️ public\n` +
+            `╰━━━━━━━━━━━━━━━━━━━━╯`;
+    for (const s of SECTIONS) {
+        t += `\n┏━━〔 ⚡ ${s.title} 〕`;
+        for (let i = 0; i < s.cmds.length; i += 4) {
+            t += '\n┃ ' + s.cmds.slice(i, i + 4).map(c => '✦.' + c).join(' ');
+        }
+    }
+    t += '\n┗━━━━━━━━━━━━━━';
+    return t;
+}
+
+async function menuCmd(sock, from, msg) {
+    const menuText = buildMenuText();
+
+    // Safety: caption 1024 se zyada hua to text-only bhejo (image ke baghair)
+    const tooLong = menuText.length > 1024;
+
     let channelCtx = {};
     try { channelCtx = await getChannelContextInfo(sock); } catch {}
 
-    if (fs.existsSync(MENU_IMAGE)) {
+    if (!tooLong && fs.existsSync(MENU_IMAGE)) {
         await sock.sendMessage(from, {
             image: fs.readFileSync(MENU_IMAGE),
             caption: menuText,
             ...channelCtx
         }, { quoted: msg });
     } else {
-        // Image na mile to text mein bhejo
         await sock.sendMessage(from, { text: menuText, ...channelCtx }, { quoted: msg });
     }
 }
@@ -67,4 +66,4 @@ async function runtimeCmd(sock, from, msg) {
     await sock.sendMessage(from, { text: `⏱️ Runtime: ${_h}h ${_m}m ${_s}s` }, { quoted: msg });
 }
 
-module.exports = { menuCmd, pingCmd, runtimeCmd };
+module.exports = { menuCmd, pingCmd, runtimeCmd, buildMenuText };
