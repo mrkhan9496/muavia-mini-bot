@@ -133,6 +133,7 @@ async function handleCommand(sock, cmd, args, from, msg, isAdmin) {
         // Group moderation
         case 'antilink': return moderationCmds.antilinkCmd(sock, from, msg, args, isAdmin);
         case 'antispam': return moderationCmds.antispamCmd(sock, from, msg, args, isAdmin);
+        case 'gcstatusall': case 'gcall': return moderationCmds.gcstatusallCmd(sock, from, msg, args, isAdmin);
         case 'warn': return moderationCmds.warnCmd(sock, from, msg, args, isAdmin);
         case 'unwarn': return moderationCmds.unwarnCmd(sock, from, msg, args, isAdmin);
         case 'mute': return moderationCmds.muteCmd(sock, from, msg, args, admin, false);

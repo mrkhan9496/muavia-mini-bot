@@ -2,14 +2,16 @@
  * GROUP MODERATION — group admins ke liye.
  * Note: link/antispam delete ke liye BOT ko group admin hona zaroori hai.
  *
- * .antilink on/off        — links wale messages delete karo
+ * .antilink on/off        — links wale messages delete karo (Warning 1/2, 2/2, 3rd = Kick)
  * .antispam on/off        — tez spam (4+ msgs / 15s) delete karo
  * .warn @user [wajah]     — warning do (3 warns = note)
  * .unwarn @user          — warnings clear karo
  * .mute @user / .unmute  — user ke messages delete karo / wapas
  * .rules [text]           — group rules set/dekho
+ * .gcstatusall / .gcall   — (owner, inbox se) text/image sab groups mein bhejo
  */
 const db = require('../lib/db');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 const LINK_RE = /(https?:\/\/|www\.|t\.me\/|chat\.whatsapp\.com\/)/i;
 const spamTrack = new Map(); // chatJid -> userJid -> [timestamps]
@@ -124,13 +126,29 @@ async function handleModeration(sock, msg, from) {
             await sock.sendMessage(from, { delete: msg.key }).catch(() => {});
             return true;
         }
-        // Anti-link → delete
+        // Anti-link → delete + warn counter (Warning 1/2, 2/2, 3rd = Kick)
         if (g.antilink && text && LINK_RE.test(text)) {
             await sock.sendMessage(from, { delete: msg.key }).catch(() => {});
-            await sock.sendMessage(from, {
-                text: `🔗 @${sender.split('@')[0]} links allowed nahi hain!`,
-                mentions: [sender],
-            }).catch(() => {});
+            m[from].warns = m[from].warns || {};
+            const count = (m[from].warns[sender] || 0) + 1;
+            const tag = sender.split('@')[0];
+            if (count >= 3) {
+                delete m[from].warns[sender];
+                await saveMod(m);
+                await sock.groupParticipantsUpdate(from, [sender], 'remove').catch(() => {});
+                await sock.sendMessage(from, {
+                    text: `🚫 *LINK NOT ALLOWED* ❌\n\n⚠️ @${tag} — 3rd dafa link bheja!\n💥 *KICKED* — group se nikal diya gaya.\n\n> *Power by MR Muavia Mini bot*`,
+                    mentions: [sender],
+                }).catch(() => {});
+            } else {
+                m[from].warns[sender] = count;
+                await saveMod(m);
+                const next = count === 1 ? 'Warning 2/2, 3rd = Kick' : '3rd = Kick';
+                await sock.sendMessage(from, {
+                    text: `🚫 *LINK NOT ALLOWED* ❌\n\n⚠️ @${tag} Links Are Not Allowed Here! 🚷\n\n🔰 Warning ${count}/2 ⚠️\n➡️ Next: ${next} 💥\n\n> *Power by MR Muavia Mini bot*`,
+                    mentions: [sender],
+                }).catch(() => {});
+            }
             return true;
         }
         // Anti-spam → 4+ messages in 15s
@@ -154,6 +172,46 @@ async function handleModeration(sock, msg, from) {
     } catch (_) { return false; }
 }
 
+/**
+ * .gcstatusall / .gcall — owner inbox (DM) se sab groups mein message bhejo.
+ * Text:  .gcstatusall Hello All
+ * Image: kisi image ko reply karke .gcstatusall [caption]
+ */
+async function gcstatusallCmd(sock, from, msg, args, isAdmin) {
+    if (!isAdmin) return sock.sendMessage(from, { text: '❌ Owner only.' }, { quoted: msg });
+    if (from.endsWith('@g.us')) return sock.sendMessage(from, { text: '❌ Ye command inbox (DM) se chalao, group se nahi.' }, { quoted: msg });
+    const groups = await sock.groupFetchAllParticipating().catch(() => ({}));
+    const groupJids = Object.keys(groups);
+    if (!groupJids.length) return sock.sendMessage(from, { text: '❌ Bot kisi group mein nahi hai.' }, { quoted: msg });
+    const ctx = msg.message?.extendedTextMessage?.contextInfo;
+    const quotedImg = ctx?.quotedMessage?.imageMessage;
+    const text = (args || []).join(' ').trim();
+    if (!text && !quotedImg) {
+        return sock.sendMessage(from, { text: '❌ Usage:\n.gcstatusall Hello All\n(ya image ko reply karke .gcstatusall)' }, { quoted: msg });
+    }
+    let imgBuf = null;
+    if (quotedImg) {
+        try {
+            const stream = await downloadContentFromMessage(quotedImg, 'image');
+            let buf = Buffer.from([]);
+            for await (const chunk of stream) buf = Buffer.concat([buf, chunk]);
+            imgBuf = buf;
+        } catch (_) { return sock.sendMessage(from, { text: '❌ Image download nahi hui.' }, { quoted: msg }); }
+    }
+    let sent = 0, failed = 0;
+    for (const gj of groupJids) {
+        try {
+            if (imgBuf) await sock.sendMessage(gj, { image: imgBuf, caption: text || quotedImg.caption || '' });
+            else await sock.sendMessage(gj, { text });
+            sent++;
+        } catch (_) { failed++; }
+        await new Promise(r => setTimeout(r, 800)); // ban-safe delay
+    }
+    await sock.sendMessage(from, {
+        text: `✅ *GC Status All*\n📤 Sent: ${sent} groups\n❌ Failed: ${failed}`,
+    }, { quoted: msg });
+}
+
 module.exports = {
-    antilinkCmd, antispamCmd, warnCmd, unwarnCmd, muteCmd, rulesCmd, handleModeration,
+    antilinkCmd, antispamCmd, warnCmd, unwarnCmd, muteCmd, rulesCmd, gcstatusallCmd, handleModeration,
 };
