@@ -9,7 +9,7 @@
  */
 const db = require('../lib/db');
 
-const DEFAULT_EMOJIS = ['🗿', '🥀', '♦️', '🎭', '🎁', '🥺', '❤️‍🔥', '😏', '😋', '😛', '🥰', '😉', '🤫', '🧐', '🤨', '🫣', '🤭'];
+const DEFAULT_EMOJIS = ['💖', '🤍', '💔', '💙', '❣️', '🩵', '💝'];
 
 async function getEmojis() {
     const setting = await db.getSetting('status_emojis');
