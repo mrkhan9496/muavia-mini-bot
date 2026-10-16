@@ -158,6 +158,8 @@ async function handleCommand(sock, cmd, args, from, msg, isAdmin) {
         case 'insta': case 'ig': return downloadersCmds.instaCmd(sock, from, msg, args);
         case 'fb': case 'facebook': return downloadersCmds.fbCmd(sock, from, msg, args);
         case 'pinterest': case 'pin': return downloadersCmds.pinterestCmd(sock, from, msg, args);
+        case 'song': case 'mp3': return downloadersCmds.songCmd(sock, from, msg, args);
+        case 'fullpp': return downloadersCmds.fullppCmd(sock, from, msg, args, isMe || isOwner(from));
         default: return null; // unknown
     }
 }

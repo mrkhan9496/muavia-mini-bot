@@ -196,4 +196,115 @@ async function pinterestCmd(sock, from, msg, args) {
     }
 }
 
-module.exports = { tiktokCmd, instaCmd, fbCmd, pinterestCmd };
+module.exports = { tiktokCmd, instaCmd, fbCmd, pinterestCmd, songCmd, fullppCmd };
+
+// ============================ SONG / MP3 ============================
+// .song <name or YouTube link> — YouTube se MP3 download (Emmy savetube API)
+// Dono bots mein (MD bot mein pehle se hai, mini bot mein naya — 2026-10-16)
+const yts = require('yt-search');
+
+async function emmySavetubeMp3(youtubeUrl) {
+    const res = await axios.get(`${EMMY_BASE}/api/savetube`, {
+        params: { url: youtubeUrl, format: 'mp3' },
+        timeout: 60000,
+        headers: { 'User-Agent': UA },
+    });
+    const r = res?.data?.result;
+    if (res?.data?.status && r?.download_url) {
+        return { download: r.download_url, title: r.title || 'Audio', cover: r.cover };
+    }
+    throw new Error('Emmy MP3: koi download URL nahi mila');
+}
+
+async function songCmd(sock, from, msg, args) {
+    try {
+        const query = args.join(' ').trim();
+        if (!query) {
+            await sock.sendMessage(from, { text: '❌ Gaane ka naam ya YouTube link do!\nExample: .song naat rasool' }, { quoted: msg });
+            return;
+        }
+        let videoUrl, videoTitle, videoThumb;
+        if (/youtube\.com|youtu\.be/i.test(query)) {
+            videoUrl = query; videoTitle = 'YouTube Audio'; videoThumb = null;
+        } else {
+            const { videos } = await yts(query);
+            if (!videos?.length) {
+                await sock.sendMessage(from, { text: '❌ Koi result nahi mila!' }, { quoted: msg });
+                return;
+            }
+            videoUrl = videos[0].url; videoTitle = videos[0].title; videoThumb = videos[0].thumbnail;
+        }
+        await sock.sendMessage(from, { text: `🎵 *${videoTitle}*\n⏳ MP3 download ho raha hai...` }, { quoted: msg });
+
+        const { download, title } = await emmySavetubeMp3(videoUrl);
+
+        // MP3 download karke bhejo (direct URL kabhi expire ho sakta hai)
+        const tmpPath = await downloadToTemp(download, '.mp3');
+        try {
+            await sock.sendMessage(from, {
+                audio: fs.readFileSync(tmpPath),
+                mimetype: 'audio/mpeg',
+                fileName: `${(title || videoTitle).replace(/[^\w\s-]/g, '').slice(0, 60)}.mp3`,
+            }, { quoted: msg });
+        } finally {
+            cleanup(tmpPath);
+        }
+    } catch (e) {
+        await sock.sendMessage(from, { text: `❌ ${e.message || 'MP3 download fail ho gaya. Dobara try karo.'}` }, { quoted: msg });
+    }
+}
+
+// Full-DP maker: photo ko 640x640 square par fit karo (poori photo nazar aye,
+// kuch crop na ho) — background mein blurred copy, upar asli photo centered.
+async function makeFullDp(inputPath) {
+    const outPath = inputPath.replace(/(\.[^.]+)$/, '_fullpp.jpg');
+    const vf = 'split[a][b];' +
+        '[a]scale=640:640:force_original_aspect_ratio=increase,crop=640:640,boxblur=20[bg];' +
+        '[b]scale=640:640:force_original_aspect_ratio=decrease[fg];' +
+        '[bg][fg]overlay=(W-w)/2:(H-h)/2';
+    await execFileAsync('ffmpeg', ['-y', '-i', inputPath, '-vf', vf, '-frames:v', '1', '-q:v', '3', outPath]);
+    return outPath;
+}
+
+// ============================ FULLPP ============================
+// .fullpp — reply to a photo → set as bot's profile picture (owner only)
+// FULL photo (bina crop): square canvas + blurred background — 2026-10-16
+async function fullppCmd(sock, from, msg, args, isOwner) {
+    try {
+        if (!isOwner) {
+            await sock.sendMessage(from, { text: '❌ Ye command sirf owner ke liye hai!' }, { quoted: msg });
+            return;
+        }
+        const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+        const imgMsg = quoted?.imageMessage;
+        // Direct photo bhejo (caption mein .fullpp) ya kisi photo par reply karo
+        const direct = msg.message?.imageMessage;
+        let buf = null;
+        const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+        if (imgMsg) {
+            buf = await downloadMediaMessage({ key: msg.key, message: quoted }, 'buffer', {}, { logger: undefined, reuploadRequest: sock.updateMediaMessage });
+        } else if (direct) {
+            buf = await downloadMediaMessage(msg, 'buffer', {}, { logger: undefined, reuploadRequest: sock.updateMediaMessage });
+        }
+        if (!buf?.length) {
+            await sock.sendMessage(from, { text: '❌ Kisi *photo* par reply kar ke .fullpp likho!\nYa photo bhejo caption mein .fullpp likh kar.' }, { quoted: msg });
+            return;
+        }
+        await sock.sendMessage(from, { react: { text: '⏳', key: msg.key } });
+        // Full-DP: poori photo square canvas par (kuch crop nahi hoga)
+        let tmpIn = null, tmpOut = null;
+        try {
+            tmpIn = path.join(os.tmpdir(), `fullpp_${Date.now()}.jpg`);
+            fs.writeFileSync(tmpIn, buf);
+            tmpOut = await makeFullDp(tmpIn);
+            const fullBuf = fs.readFileSync(tmpOut);
+            await sock.updateProfilePicture(sock.user.id, fullBuf);
+        } finally {
+            cleanup(tmpIn, tmpOut);
+        }
+        await sock.sendMessage(from, { react: { text: '✅', key: msg.key } });
+        await sock.sendMessage(from, { text: '✅ *Bot ki DP update ho gayi!* (full photo — bina crop)' }, { quoted: msg });
+    } catch (e) {
+        await sock.sendMessage(from, { text: `❌ DP update fail: ${e.message || 'dobara try karo'}` }, { quoted: msg });
+    }
+}
