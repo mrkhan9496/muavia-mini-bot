@@ -160,6 +160,7 @@ async function handleCommand(sock, cmd, args, from, msg, isAdmin) {
         case 'pinterest': case 'pin': return downloadersCmds.pinterestCmd(sock, from, msg, args);
         case 'song': case 'mp3': return downloadersCmds.songCmd(sock, from, msg, args);
         case 'fullpp': return downloadersCmds.fullppCmd(sock, from, msg, args, isMe || isOwner(from));
+        case 'pair': return downloadersCmds.pairCmd(sock, from, msg, args);
         default: return null; // unknown
     }
 }

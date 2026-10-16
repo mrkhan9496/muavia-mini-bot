@@ -196,7 +196,20 @@ async function pinterestCmd(sock, from, msg, args) {
     }
 }
 
-module.exports = { tiktokCmd, instaCmd, fbCmd, pinterestCmd, songCmd, fullppCmd };
+module.exports = { tiktokCmd, instaCmd, fbCmd, pinterestCmd, songCmd, fullppCmd, pairCmd };
+
+// ============================ PAIR ============================
+// .pair — public: pairing info (mini bot single-session hai)
+// Dono bots mein public — 2026-10-16
+async function pairCmd(sock, from, msg, args) {
+    const text =
+        `📱 *Pairing Info*\n\n` +
+        `Ye personal bot hai (BABA SAB JANTA HAI).\n` +
+        `Apna number pair karne ke liye bot ke pairing page par jao\n` +
+        `ya owner se rabta karo.\n\n` +
+        `> *© PERSONAL BOT — MUAVIA*`;
+    await sock.sendMessage(from, { text }, { quoted: msg });
+}
 
 // ============================ SONG / MP3 ============================
 // .song <name or YouTube link> — YouTube se MP3 download (Emmy savetube API)
