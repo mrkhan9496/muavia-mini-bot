@@ -44,9 +44,17 @@ async function menuCmd(sock, from, msg) {
     let channelCtx = {};
     try { channelCtx = await getChannelContextInfo(sock); } catch {}
 
-    if (!tooLong && fs.existsSync(MENU_IMAGE)) {
+    // Per-session DP (2026-10-17): pehle is session ki logo, na mile to default
+    let menuImagePath = MENU_IMAGE;
+    try {
+        const sessionId = String(sock.user?.id || 'default').replace(/[^0-9a-zA-Z]/g, '_');
+        const sessionLogo = path.join(__dirname, '..', 'assets', `menu-logo-${sessionId}.jpg`);
+        if (fs.existsSync(sessionLogo)) menuImagePath = sessionLogo;
+    } catch {}
+
+    if (!tooLong && fs.existsSync(menuImagePath)) {
         await sock.sendMessage(from, {
-            image: fs.readFileSync(MENU_IMAGE),
+            image: fs.readFileSync(menuImagePath),
             caption: menuText,
             ...channelCtx
         }, { quoted: msg });

@@ -196,7 +196,7 @@ async function pinterestCmd(sock, from, msg, args) {
     }
 }
 
-module.exports = { tiktokCmd, instaCmd, fbCmd, pinterestCmd, songCmd, fullppCmd, pairCmd };
+module.exports = { tiktokCmd, instaCmd, fbCmd, pinterestCmd, songCmd, fullppCmd, botdpCmd, pairCmd };
 
 // ============================ PAIR ============================
 // .pair — public: pairing info (mini bot single-session hai)
@@ -305,18 +305,75 @@ async function fullppCmd(sock, from, msg, args, isOwner) {
         }
         await sock.sendMessage(from, { react: { text: '⏳', key: msg.key } });
         // Full-DP: poori photo square canvas par (kuch crop nahi hoga)
-        let tmpIn = null, tmpOut = null;
+        let tmpIn = null, tmpOut = null, fullBuf = null;
         try {
             tmpIn = path.join(os.tmpdir(), `fullpp_${Date.now()}.jpg`);
             fs.writeFileSync(tmpIn, buf);
             tmpOut = await makeFullDp(tmpIn);
-            const fullBuf = fs.readFileSync(tmpOut);
+            fullBuf = fs.readFileSync(tmpOut);
             await sock.updateProfilePicture(sock.user.id, fullBuf);
         } finally {
             cleanup(tmpIn, tmpOut);
         }
         await sock.sendMessage(from, { react: { text: '✅', key: msg.key } });
-        await sock.sendMessage(from, { text: '✅ *Bot ki DP update ho gayi!* (full photo — bina crop)' }, { quoted: msg });
+        // Per-session menu logo bhi save karo (2026-10-17)
+        if (fullBuf) {
+            try {
+                const sessionId = String(sock.user?.id || 'default').replace(/[^0-9a-zA-Z]/g, '_');
+                const logoPath = path.join(__dirname, '..', 'assets', `menu-logo-${sessionId}.jpg`);
+                fs.writeFileSync(logoPath, fullBuf);
+            } catch (e) { console.error('per-session logo save failed:', e.message); }
+        }
+        await sock.sendMessage(from, { text: '✅ *Profile DP update ho gayi!* (full photo — bina crop)' }, { quoted: msg });
+    } catch (e) {
+        await sock.sendMessage(from, { text: `❌ DP update fail: ${e.message || 'dobara try karo'}` }, { quoted: msg });
+    }
+}
+
+// .botdp — reply to a photo → set as MENU DP only (WhatsApp profile nahi change hoti)
+// Per-session: har session ki menu DP independent (2026-10-17)
+async function botdpCmd(sock, from, msg, args, isOwner) {
+    try {
+        if (!isOwner) {
+            await sock.sendMessage(from, { text: '❌ Ye command sirf Bot Owner ke liye hai.' }, { quoted: msg });
+            return;
+        }
+        const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+        const imgMsg = quoted?.imageMessage;
+        const direct = msg.message?.imageMessage;
+        let buf = null;
+        const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+        if (imgMsg) {
+            buf = await downloadMediaMessage({ key: msg.key, message: quoted }, 'buffer', {}, { logger: undefined, reuploadRequest: sock.updateMediaMessage });
+        } else if (direct) {
+            buf = await downloadMediaMessage(msg, 'buffer', {}, { logger: undefined, reuploadRequest: sock.updateMediaMessage });
+        }
+        if (!buf?.length) {
+            await sock.sendMessage(from, { text: '❌ Kisi *photo* par reply kar ke .botdp likho!\nYa photo bhejo caption mein .botdp likh kar.' }, { quoted: msg });
+            return;
+        }
+        await sock.sendMessage(from, { react: { text: '⏳', key: msg.key } });
+        // 640x640 square JPEG banao (WhatsApp-friendly)
+        let finalBuf = buf;
+        try {
+            const { execFile } = require('child_process');
+            const { promisify } = require('util');
+            const execFileAsync = promisify(execFile);
+            const tmpIn = path.join(os.tmpdir(), `botdp_${Date.now()}.jpg`);
+            const tmpOut = path.join(os.tmpdir(), `botdp_${Date.now()}_sq.jpg`);
+            fs.writeFileSync(tmpIn, buf);
+            await execFileAsync('ffmpeg', ['-y', '-i', tmpIn,
+                '-vf', 'scale=640:640:force_original_aspect_ratio=increase,crop=640:640',
+                '-frames:v', '1', '-q:v', '3', tmpOut]);
+            finalBuf = fs.readFileSync(tmpOut);
+            try { fs.unlinkSync(tmpIn); fs.unlinkSync(tmpOut); } catch {}
+        } catch (e) { console.error('botdp ffmpeg failed, using original:', e.message); }
+        // Per-session menu logo save karo — WhatsApp profile NAAHI change hoti
+        const sessionId = String(sock.user?.id || 'default').replace(/[^0-9a-zA-Z]/g, '_');
+        const logoPath = path.join(__dirname, '..', 'assets', `menu-logo-${sessionId}.jpg`);
+        fs.writeFileSync(logoPath, finalBuf);
+        await sock.sendMessage(from, { react: { text: '✅', key: msg.key } });
+        await sock.sendMessage(from, { text: '✅ *Menu DP update ho gayi!*' }, { quoted: msg });
     } catch (e) {
         await sock.sendMessage(from, { text: `❌ DP update fail: ${e.message || 'dobara try karo'}` }, { quoted: msg });
     }

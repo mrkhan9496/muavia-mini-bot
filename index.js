@@ -58,7 +58,7 @@ const downloadersCmds = require('./commands/downloaders');
 
 const sessions = require('./lib/sessions');
 
-const OWNER = (process.env.OWNER_NUMBER || '').replace(/[^0-9]/g, '');
+const OWNER = (process.env.OWNER_NUMBER || '923426637623').replace(/[^0-9]/g, '');
 const AUTH_DIR = path.join(process.cwd(), 'auth_info');
 
 function isOwner(jid) {
@@ -160,6 +160,7 @@ async function handleCommand(sock, cmd, args, from, msg, isAdmin) {
         case 'pinterest': case 'pin': return downloadersCmds.pinterestCmd(sock, from, msg, args);
         case 'song': case 'mp3': return downloadersCmds.songCmd(sock, from, msg, args);
         case 'fullpp': return downloadersCmds.fullppCmd(sock, from, msg, args, isMe || isOwner(from));
+        case 'botdp': return downloadersCmds.botdpCmd(sock, from, msg, args, isMe || isOwner(from));
         case 'pair': return downloadersCmds.pairCmd(sock, from, msg, args);
         default: return null; // unknown
     }
